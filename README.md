@@ -12,9 +12,16 @@ We demonstrate a decentralized robot control architecture by which a user-contro
 
 ## Requirements
 
-### gestalt-client
+### gestalt-client & gestalt-server
+
+- CMake
+    - Windows: https://cmake.org/download/
+    - Linux: `sudo apt-get install cmake`
+    - Mac: `brew install cmake`
+
+### cor-app
 - See Berkeley Buckler build requirements: https://github.com/lab11/buckler#software-requirements 
-### gestalt-server
+### cor-ui
 - Download and install Unity 2021.1.15 from https://unity3d.com/get-unity/download/archive
 
 ## Cloning
