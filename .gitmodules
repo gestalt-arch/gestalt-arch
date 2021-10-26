@@ -1,0 +1,3 @@
+[submodule "firmware/buckler"]
+	path = firmware/buckler
+	url = https://github.com/lab11/buckler.git
