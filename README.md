@@ -10,6 +10,13 @@ We demonstrate a decentralized robot control architecture by which a user-contro
 - nRF52832 - https://www.nordicsemi.com/products/nrf52832
 - Berkeley Buckler - https://github.com/lab11/buckler
 
+## Requirements
+
+### gestalt-client
+- See Berkeley Buckler build requirements: https://github.com/lab11/buckler#software-requirements 
+### gestalt-server
+- Download and install Unity 2021.1.15 from https://unity3d.com/get-unity/download/archive
+
 ## Cloning
 
 The project uses the Berkeley Buckler repo as a submodule
@@ -30,7 +37,3 @@ $ git submodule update --init --recursive
 $ cd gestalt-arch/firmware
 $ git submodule update --init --recursive --progress
 ```
-
-## Requirements
-
-- See Berkeley Buckler build requirements: https://github.com/lab11/buckler#software-requirements 
