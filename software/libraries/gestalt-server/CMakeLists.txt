@@ -1,10 +1,10 @@
 # CMake minimum version
 cmake_minimum_required(VERSION 3.1)
 
-# Cmake file for making the MTIDevice library
+# Cmake file for making the gestalt-server library
 project( gestalt-server )
 
-# Append _d to the debug version of MTIDevice => libMTIDevice_d.so
+# Append _d to the debug version
 set(CMAKE_DEBUG_POSTFIX "_d")
 
 
