@@ -14,7 +14,7 @@ set(CMAKE_DEBUG_POSTFIX "_d")
 # and CMake builds them for you
 add_library(
     # Library name
-    gestalt-server
+    gestalt_server
 
     # Library type (SHARED or STATIC)
     SHARED
