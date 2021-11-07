@@ -1,6 +1,9 @@
 # Autosave files
 *~$*
 
+# IDE Files
+.vscode/
+
 # Prerequisites
 *.d
 
