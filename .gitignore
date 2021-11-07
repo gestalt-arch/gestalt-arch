@@ -1,6 +1,9 @@
 # Autosave files
 *~$*
 
+# OS files
+*.DS_Store*
+
 # IDE Files
 .vscode/
 
