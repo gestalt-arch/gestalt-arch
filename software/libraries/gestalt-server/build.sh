@@ -37,10 +37,15 @@ mkdir -p $BUILD_DIR
 cd $BUILD_DIR
 # Find appropriate cmake command based on OS
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    # Linux 
+    # Linux
     cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
     make
     BUILD_RESULT=$BUILD_DIR/gestalt_server$BUILD_SUFFIX.so
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    # Darwin
+    cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
+    make
+    BUILD_RESULT=$BUILD_DIR/libgestalt_server$BUILD_SUFFIX.dylib
 elif [[ "$OSTYPE" == "msys" ]]; then
     # MinGW for Windows
     cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
@@ -64,6 +69,9 @@ cd $rootdir
 
 # Deploy the .dll/.so to cor-ui
 if [[ $@ == *deploy* ]]; then
+    if [ ! -d $DEPLOY_DIR ]; then
+        mkdir -p $DEPLOY_DIR
+    fi
     cp -v $BUILD_RESULT $DEPLOY_DIR
     if [ $? -ne 0 ]; then
         echo "Deploy failed"
