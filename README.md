@@ -12,7 +12,7 @@ We demonstrate a decentralized robot control architecture by which a user-contro
 
 ## Requirements
 
-### gestalt-client & gestalt-server
+### gestalt-client & gestalt-solver
 
 - CMake
     - Windows: https://cmake.org/download/
