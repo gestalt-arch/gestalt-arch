@@ -33,6 +33,13 @@ typedef struct StateVector
     unsigned int num_cubes;
 } StateVector;
 
+typedef struct DistNode
+{
+    int bot_id;
+    int cube_id;
+    float dist;
+} DistNode;
+
 
 /*
  * Allocate a PathStream with path_length number of entries in all streams
@@ -59,6 +66,10 @@ void free_state_vector(StateVector* state_vector);
  * Returns Euclidean distance between two 2D vectors
  */
 float get_2d_dist(float x1, float y1, float x2, float y2);
+
+void dist_node_swap(DistNode** a, DistNode** b);
+
+void dist_node_sort(DistNode** dist_node_array, unsigned int num_dist_nodes);
 
 /*
  * Solve the path streams and return the solution

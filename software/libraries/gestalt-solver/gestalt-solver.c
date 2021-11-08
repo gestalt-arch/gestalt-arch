@@ -60,6 +60,30 @@ float get_2d_dist(float x1, float y1, float x2, float y2)
     return sqrtf(powf(x2-x1, 2) + powf(y2-y1, 2));
 }
 
+void dist_node_swap(DistNode** a, DistNode** b)
+{
+    DistNode* tmp = *a;
+    *a = *b;
+    *b = tmp;
+}
+
+void dist_node_sort(DistNode** dist_node_array, unsigned int num_dist_nodes)
+{
+    // A selection sort implementation
+    int min_pos;
+    for(int i = 0; i < num_dist_nodes - 1; i++) 
+    {
+        min_pos = i;
+        for(int j = i + 1; j < num_dist_nodes; j++)
+        {
+            if(dist_node_array[j]->dist < dist_node_array[min_pos]->dist)
+                min_pos = j;
+        }
+        dist_node_swap(&dist_node_array[min_pos], &dist_node_array[i]);
+    }
+}
+
+
 /*
  * Solve the path streams and return the solution
  *  - returns num_path_streams
@@ -77,15 +101,34 @@ unsigned int solve_pathstream(PathStreamSolution* path_stream_solution, StateVec
         alloc_path_stream(path_stream_vector[i], path_length);
     }
 
-
     PathStreamSolution* ps_solution = malloc(sizeof(struct PathStreamSolution));
+    ps_solution->path_stream_vector = path_stream_vector;
+    ps_solution->num_path_streams = initial_state->num_bots;
+
+    // Find distances between each bot in initial state
+    // and each cube in the final state
+    unsigned int num_dist_nodes = initial_state->num_cubes * initial_state->num_bots;
+    DistNode** dist_node_array = malloc(sizeof(DistNode*) * num_dist_nodes);
+    
+    int idx = 0;
     for(unsigned int i = 0; i < initial_state->num_cubes; i++) 
     {
         for(unsigned int j = 0; j < initial_state->num_bots; j++)
         {
-
+            dist_node_array[idx] = malloc(sizeof(DistNode));
+            dist_node_array[idx]->bot_id = initial_state->bot_ids[j];
+            dist_node_array[idx]->cube_id = initial_state->cube_ids[i];
+            dist_node_array[idx]->dist = get_2d_dist(
+                initial_state->bot_x_pos_stream[j],
+                initial_state->bot_y_pos_stream[j],
+                initial_state->cube_x_pos_stream[i],
+                initial_state->cube_y_pos_stream[i]
+            );
+            idx++;
         }
     }
 
-    return NULL;
+    dist_node_sort(dist_node_array, num_dist_nodes);
+
+    return final_state->num_bots;
 }
