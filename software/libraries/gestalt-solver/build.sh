@@ -51,11 +51,11 @@ elif [[ "$OSTYPE" == "msys" ]]; then
     cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
     echo $WIN_BUILD_ARGS
     echo $BUILD_TYPE
-    MSBuild.exe gestalt-server.sln $WIN_BUILD_ARGS
+    MSBuild.exe gestalt-solver.sln $WIN_BUILD_ARGS
     if [[ $@ == *debug* ]]; then
-        BUILD_RESULT=$BUILD_DIR/Debug/gestalt_server$BUILD_SUFFIX.dll
+        BUILD_RESULT=$BUILD_DIR/Debug/gestalt_solver$BUILD_SUFFIX.dll
     elif [[ $@ == *release* ]]; then
-        BUILD_RESULT=$BUILD_DIR/Release/gestalt_server$BUILD_SUFFIX.dll
+        BUILD_RESULT=$BUILD_DIR/Release/gestalt_solver$BUILD_SUFFIX.dll
     fi
     
 fi
