@@ -40,17 +40,17 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     # Linux 
     cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
     make
-    BUILD_RESULT=$BUILD_DIR/gestalt_server$BUILD_SUFFIX.so
+    BUILD_RESULT=$BUILD_DIR/gestalt_solver$BUILD_SUFFIX.so
 elif [[ "$OSTYPE" == "msys" ]]; then
     # MinGW for Windows
     cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
     echo $WIN_BUILD_ARGS
     echo $BUILD_TYPE
-    MSBuild.exe gestalt-server.sln $WIN_BUILD_ARGS
+    MSBuild.exe gestalt-solver.sln $WIN_BUILD_ARGS
     if [[ $@ == *debug* ]]; then
-        BUILD_RESULT=$BUILD_DIR/Debug/gestalt_server$BUILD_SUFFIX.dll
+        BUILD_RESULT=$BUILD_DIR/Debug/gestalt_solver$BUILD_SUFFIX.dll
     elif [[ $@ == *release* ]]; then
-        BUILD_RESULT=$BUILD_DIR/Release/gestalt_server$BUILD_SUFFIX.dll
+        BUILD_RESULT=$BUILD_DIR/Release/gestalt_solver$BUILD_SUFFIX.dll
     fi
     
 fi
