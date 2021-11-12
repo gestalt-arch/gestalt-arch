@@ -88,11 +88,11 @@ GestaltSolver::AStarGraph::AStarGraph(int graph_dim, float env_size, float bot_s
     this->bot_size = bot_size;
     this->obj_size = obj_size;
     float pos_increment = (float)graph_dim / env_size;
-
-    std::vector<AStarNode> all_nodes(graph_dim*graph_dim);
+    std::vector<std::vector<AStarNode>> all_nodes(graph_dim);
     this->pos_node_map = std::unordered_map<Vector2, AStarNode>();
     // Generate all nodes and populate pos_node_map
     for (int r = 0; r < graph_dim; r++) {
+        all_nodes.push_back(std::vector<AStarNode>(graph_dim));
         for (int c = 0; c < graph_dim; c++) {
             Vector2 pos;
             pos.x_pos = c * pos_increment;
@@ -102,11 +102,32 @@ GestaltSolver::AStarGraph::AStarGraph(int graph_dim, float env_size, float bot_s
             node.loc = pos;
             node.occupied = false;
             
-            all_nodes.push_back(node);
-
+            all_nodes[r].push_back(node);
+            this->pos_node_map.insert({ pos, node });
         }
     }
     // Make all connections
+    for (int r = 0; r < graph_dim; r++) {
+        for (int c = 0; c < graph_dim; c++) {
+            AStarNode node = all_nodes[r][c];
+            if (r > 0) {
+                if(c > 0)
+                    node.neighbors.push_back(all_nodes[r - 1][c - 1]);
+                if(c < graph_dim - 1)
+                    node.neighbors.push_back(all_nodes[r - 1][c + 1]);
+                node.neighbors.push_back(all_nodes[r - 1][c]);
+            }
+            if (r < graph_dim - 1) {
+                if (c > 0)
+                    node.neighbors.push_back(all_nodes[r + 1][c - 1]);
+                if (c < graph_dim - 1)
+                    node.neighbors.push_back(all_nodes[r + 1][c + 1]);
+                node.neighbors.push_back(all_nodes[r + 1][c]);
+            }
+            //TODO: add middle left, middle right
+            
+        }
+    }
 }
 
 std::vector<GestaltSolver::Vector2> GestaltSolver::AStarGraph::solve(Vector2 start_pos, Vector2 end_pos)
