@@ -1,5 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <vector>
+#include <memory>
+#include <cmath>
+#include <algorithm>
+#include <unordered_map>
 
 #define STATE_GRAPH_DIM 16 // Determines the dimension (M) of the state graph (M x M)
 #define MAX_BOTS 16
@@ -45,6 +50,7 @@ extern "C" {
             int num_objs;
         };
 
+
         struct SolutionConfig
         {
             float env_size; // Length and width of the environment (in meters)
@@ -63,9 +69,33 @@ extern "C" {
         *  - Populates path_stream_solution struct as OUTPUT
         *  - Takes inital_state and final_state vectors as INPUT
         */
-        static unsigned int solve_pathstream(PathStreamSolution* path_stream_solution, StateVector* initial_state, StateVector* final_state);
+        static unsigned int solve_pathstream(PathStreamSolution* path_stream_solution, StateVector* initial_state, StateVector* final_state, SolutionConfig* solution_config);
 
     private:
+
+        struct Vector2 {
+            float x_pos, y_pos;
+        };
+
+        class AStarGraph {
+            public:
+                
+                struct AStarNode {
+                    Vector2 loc;
+                    bool occupied;
+                    std::vector<AStarNode> neighbors;
+                };
+
+                AStarGraph(int graph_dim, float env_size, float bot_size, float obj_size);
+
+                
+                std::vector<Vector2> solve(Vector2 start_pos, Vector2 end_pos);
+            private:
+                float bot_size;
+                float obj_size;
+                std::unordered_map<Vector2, AStarNode> pos_node_map;
+
+        };
 
         struct DistNode
         {
@@ -74,9 +104,10 @@ extern "C" {
             float dist;
         };
 
-        static void dist_node_swap(DistNode** a, DistNode** b);
+        static std::vector<std::shared_ptr<DistNode>> gen_dist_nodes(StateVector* initial_state);
 
-        static void dist_node_sort(DistNode** dist_node_array, unsigned int num_dist_nodes);
+
+        
 
 
     };
