@@ -20,4 +20,4 @@ add_library(
     SHARED
 
     # Source files
-    gestalt-solver.c )
+    "gestalt-solver.cpp" )
