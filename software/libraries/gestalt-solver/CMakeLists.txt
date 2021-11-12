@@ -21,3 +21,7 @@ add_library(
 
     # Source files
     "gestalt-solver.cpp" )
+
+enable_testing()
+add_executable(gestalt-solver-tester gestalt-solver-tester.cpp)
+add_test(gestalt-solver-tester gestalt-solver-tester)
