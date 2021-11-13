@@ -102,7 +102,8 @@ public class CameraController : MonoBehaviour
         // Orbit
         if (target)
         {
-            if (Input.GetMouseButton(0))
+            // Rotate
+            if (Input.GetMouseButton(1))
             {
                 x += Input.GetAxis("Mouse X") * orbitXSpeed * orbitDistance * 0.02f;
                 y -= Input.GetAxis("Mouse Y") * orbitYSpeed * orbitDistance * 0.02f;
@@ -110,14 +111,10 @@ public class CameraController : MonoBehaviour
                 y = ClampAngle(y, orbitYMinLimit, orbitYMaxLimit);
                 UpdateCamPosition();
 
-            }
-            // Rotate
-            else if (Input.GetMouseButton(1))
-            {
-                _yaw += _speedH * Input.GetAxis("Mouse X");
-                _pitch -= _speedV * Input.GetAxis("Mouse Y");
+                //_yaw += _speedH * Input.GetAxis("Mouse X");
+                //_pitch -= _speedV * Input.GetAxis("Mouse Y");
 
-                transform.eulerAngles = new Vector3(_pitch, _yaw, 0.0f);
+                //transform.eulerAngles = new Vector3(_pitch, _yaw, 0.0f);
             }
         }
     }
