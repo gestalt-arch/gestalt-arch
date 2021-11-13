@@ -6,6 +6,22 @@
 #include <algorithm>
 #include <unordered_map>
 
+///////////////////////////////////////////////////////////////////////////////////
+// OS DLL EXPORT definitions
+#if defined(_WIN32) || defined(_WIN64) || defined(_WINDOWS)
+#define GESTALT_WINDOWS
+#endif
+#if defined(__linux__) || defined( __unix__)
+#define GESTALT_LINUX
+#endif
+
+#ifdef GESTALT_LINUX
+#define DLLEXPORT
+#else
+#define DLLEXPORT	__declspec(dllimport)
+#endif
+///////////////////////////////////////////////////////////////////////////////////
+
 #define STATE_GRAPH_DIM 16 // Determines the dimension (M) of the state graph (M x M)
 #define MAX_BOTS 16
 #define MAX_OBJECTS 16
@@ -15,7 +31,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    class __declspec(dllexport) GestaltSolver 
+    class DLLEXPORT GestaltSolver 
     {
 
     public:
@@ -90,6 +106,7 @@ extern "C" {
 
                 
                 std::vector<Vector2> solve(Vector2 start_pos, Vector2 end_pos);
+
             private:
                 float bot_size;
                 float obj_size;
@@ -105,10 +122,6 @@ extern "C" {
         };
 
         static std::vector<std::shared_ptr<DistNode>> gen_dist_nodes(StateVector* initial_state);
-
-
-        
-
 
     };
 
