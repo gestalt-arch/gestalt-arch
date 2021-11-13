@@ -14,10 +14,18 @@
 #if defined(__linux__) || defined( __unix__)
 #define GESTALT_LINUX
 #endif
+#if defined(__APPLE__) || defined( __OSX__)
+#define GESTALT_APPLE
+#endif
+
 
 #ifdef GESTALT_LINUX
 #define DLLEXPORT
-#else
+#endif
+#ifdef GESTALT_APPLE
+#define DLLEXPORT
+#endif
+#ifdef GESTALT_WINDOWS
 #define DLLEXPORT	__declspec(dllimport)
 #endif
 ///////////////////////////////////////////////////////////////////////////////////
@@ -121,7 +129,7 @@ extern "C" {
             float dist;
         };
 
-        static std::vector<std::shared_ptr<DistNode>> gen_dist_nodes(StateVector* initial_state);
+        static std::vector<std::shared_ptr<DistNode> > gen_dist_nodes(StateVector* initial_state);
 
     };
 

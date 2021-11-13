@@ -5,16 +5,16 @@
  */
 float GestaltSolver::get_2d_dist(float x1, float y1, float x2, float y2)
 {
-    return std::sqrtf(std::powf(x2-x1, 2) + std::powf(y2-y1, 2));
+    return std::sqrt(std::pow(x2-x1, 2) + std::pow(y2-y1, 2));
 }
 
-std::vector < std::shared_ptr < GestaltSolver:: DistNode >> GestaltSolver::gen_dist_nodes(StateVector* initial_state)
+std::vector < std::shared_ptr < GestaltSolver:: DistNode > > GestaltSolver::gen_dist_nodes(StateVector* initial_state)
 {
     // Find distances between each bot in initial state
     // and each cube in the final state
     unsigned int num_dist_nodes = initial_state->num_objs * initial_state->num_bots;
 
-    std::vector<std::shared_ptr<DistNode>> dist_node_array(num_dist_nodes);
+    std::vector<std::shared_ptr<DistNode> > dist_node_array(num_dist_nodes);
 
     int idx = 0;
     for (unsigned int i = 0; i < initial_state->num_objs; i++)
@@ -47,7 +47,7 @@ unsigned int GestaltSolver::solve_pathstream(PathStreamSolution* path_stream_sol
 {
 
     // Generate the dist nodes
-    std::vector<std::shared_ptr<DistNode>> dist_node_array = gen_dist_nodes(initial_state);
+    std::vector<std::shared_ptr<DistNode> > dist_node_array = gen_dist_nodes(initial_state);
 
     // Sort the array of DistNodes by distance
     std::sort(dist_node_array.begin(), dist_node_array.end(),
@@ -57,7 +57,7 @@ unsigned int GestaltSolver::solve_pathstream(PathStreamSolution* path_stream_sol
 
     // Assign each bot to an object
     //  Note this only works when num_bots = num_objs
-    std::vector<std::shared_ptr<DistNode>> objective_array(initial_state->num_bots);
+    std::vector<std::shared_ptr<DistNode> > objective_array(initial_state->num_bots);
     int bot_idx = 0;
     while (bot_idx < initial_state->num_bots)
     {
@@ -88,7 +88,7 @@ GestaltSolver::AStarGraph::AStarGraph(int graph_dim, float env_size, float bot_s
     this->bot_size = bot_size;
     this->obj_size = obj_size;
     float pos_increment = (float)graph_dim / env_size;
-    std::vector<std::vector<AStarNode>> all_nodes(graph_dim);
+    std::vector<std::vector<AStarNode> > all_nodes(graph_dim);
     this->pos_node_map = std::unordered_map<Vector2, AStarNode>();
     // Generate all nodes and populate pos_node_map
     for (int r = 0; r < graph_dim; r++) {
