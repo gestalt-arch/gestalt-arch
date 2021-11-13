@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class DragRoomba : MonoBehaviour
+public class DragCube : MonoBehaviour
 {
     private Vector3 offset;
 
@@ -14,7 +14,7 @@ public class DragRoomba : MonoBehaviour
     void OnMouseDrag()
     {
         transform.position = GetHitPoint() + offset;
-        transform.position = new Vector3(transform.position.x, 0.1f, transform.position.z);
+        transform.position = new Vector3(transform.position.x, 0.5f, transform.position.z);
     }
 
     Vector3 GetHitPoint()

@@ -67,6 +67,8 @@ public class CameraController : MonoBehaviour
         Vector3 angles = transform.eulerAngles;
         x = angles.y;
         y = angles.x;
+
+        ResetCameraTarget();
     }
 
     // Update is called once per frame
@@ -124,7 +126,7 @@ public class CameraController : MonoBehaviour
         Quaternion rotation = Quaternion.Euler(y, x, 0);
         RaycastHit hit;
         //Debug.DrawLine(target.position, transform.position, Color.red);
-        if (Physics.Linecast(target.position, transform.position, out hit, ~LayerMask.GetMask("Floor"), QueryTriggerInteraction.Ignore))
+        if (Physics.Linecast(target.position, transform.position, out hit, LayerMask.GetMask("Floor"), QueryTriggerInteraction.Ignore))
         {
             orbitDistance -= hit.distance;
         }
