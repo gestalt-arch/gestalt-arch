@@ -26,10 +26,6 @@ typedef struct {
 
 } Gestalt_sensor_data_t;
 
-typedef struct {
-
-}
-
 void gestalt_update_pathstream
 
 // Receive sensor data
