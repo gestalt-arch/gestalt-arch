@@ -31,10 +31,10 @@
 ///////////////////////////////////////////////////////////////////////////////////
 
 #define STATE_GRAPH_DIM 16 // Determines the dimension (M) of the state graph (M x M)
-#define MAX_BOTS 16
-#define MAX_OBJECTS 16
+#define MAX_BOTS 4
+#define MAX_OBJECTS 4
 
-#define MAX_SOLUTION_LENGTH 128
+#define MAX_SOLUTION_LENGTH 64
 
 #ifdef __cplusplus
 extern "C" {
