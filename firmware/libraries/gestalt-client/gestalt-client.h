@@ -7,13 +7,13 @@
 typedef enum {
     GESTALT_MOVE,
     GESTALT_GRAB,
-    GESTALT_DROP
+    GESTALT_DROP,
+    GESTALT_STOP
 } Gestalt_action_t;
 
 typedef struct {
-    float curr_x_pos;
-    float curr_y_pos;
-    float curr_rotation;
+    float pos_error;
+    float theta_error;
 } Gestalt_status_t;
 
 typedef struct {
@@ -47,6 +47,9 @@ void gestalt_update_pathstream_sol(Gestalt_path_stream_sol_t* path);
 
 // Receive sensor data
 void gestalt_update_sensor_data(const Gestalt_sensor_data_t* sensor_data);
+
+// Inform gestalt client that the active goal is complete
+void gestalt_send_goal_complete();
 
 // Returns the current goal position and action
 Gestalt_goal_t gestalt_get_current_goal();
