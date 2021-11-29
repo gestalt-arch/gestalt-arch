@@ -2,7 +2,7 @@
 #include "kobukiSensorTypes.h"
 
 #define MAX_SOLUTION_LENGTH 64
-#define MAX_BOTS 4
+#define MAX_BOTS 3
 
 typedef enum {
     GESTALT_MOVE,
