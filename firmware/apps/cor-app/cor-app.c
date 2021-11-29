@@ -6,9 +6,13 @@ KobukiSensors_t sensors = { 0 };
 
 
 // UART over Virtual COM port
-uint8_t uart_rx_flag = 0;
+uint8_t uart_rx_state = 0; // 0 - nothing read 
+						   // 1 - 'g''s' 
+						   // 2 - num_bytes found
+						   // 3 - done reading
 uint16_t uart_rx_write_head = 0;
 uint8_t solution_buffer[4096];
+uint16_t solution_num_bytes;
 
 void ser_event_handler(nrf_serial_t const* p_serial, nrf_serial_event_t event)
 {
@@ -43,39 +47,53 @@ void ser_event_handler(nrf_serial_t const* p_serial, nrf_serial_event_t event)
 void ser_rx_data(uint8_t* data, size_t size) {
 	// Determine if path-stream solution being transmitted
 	// packet header: 'g' 's'
-	// packet footer: '\r' '\n'
+	// packet footer: '\n'
 
-	printf("%.*s", size, data); // print the received packets
+	printf("%.*s\n", size, data); // print the received packets
 
 	uint8_t fc_found = 0; // first char found flag
 	uint8_t lc_found = 0; // last char found flag
 	// TODO: if fc/lc are not within contiguous 16 bytes, we will not detect beginning or end
 	// consider making these two vars global
+
+
 	for (uint32_t i = 0; i < size; i++) {
-		if (uart_rx_flag == 0) {
+		switch (uart_rx_state) {
+		case 0: // Look for 'g' -> 's'
+		{
+
 			if (data[i] == 'g')
 				fc_found = 1; // found first g
 			else if (fc_found == 1 && data[i] == 's')
-				uart_rx_flag = 1; // found 'g' then 's'
+				uart_rx_state = 1; // found 'g' then 's'
 			else if (fc_found == 1 && data[i] != 's')
 				fc_found = 0;
-			else
-				// do nothing
+			break;
 		}
-		else if (uart_rx_flag == 1) {
-			if (data[i] == '\r')
-				lc_found = 1;
-			else if (lc_found == 1 && data[i] == '\n') {
-				uart_rx_flag = 2;
+		case 1:
+		{
+			// Read num_bytes
+			solution_num_bytes = (data[i] << 8) | data[i + 1]; // unsafe read
+			printf("Total num_bytes in solution : %hu\n", solution_num_bytes);
+			uart_rx_state = 2;
+			i += 1; // skip next byte
+			break;
+		}
+		case 2:
+		{
+			if (uart_rx_write_head + 4 == solution_num_bytes) { // write_head starts after first 4 bytes passed
+																// TODO: check for \n here?
+				uart_rx_state = 3;
 			}
-			else if (lc_found == 1 && data[i] != '\n')
-				lc_found = 0;
-			else
+			else {
 				solution_buffer[uart_rx_write_head++] = data[i];
+			}
+		}
 		}
 	}
-	
 }
+
+
 
 
 void corapp_run()
