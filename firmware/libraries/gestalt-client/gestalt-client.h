@@ -1,5 +1,6 @@
 
 #include "kobukiSensorTypes.h"
+#include <stdint.h>
 
 #define MAX_SOLUTION_LENGTH 64
 #define MAX_BOTS 3
@@ -31,19 +32,19 @@ typedef struct {
 typedef struct {
     float x_pos_stream[MAX_SOLUTION_LENGTH];
     float y_pos_stream[MAX_SOLUTION_LENGTH];
-    int action_stream[MAX_SOLUTION_LENGTH];
-    int exclusion_stream[MAX_SOLUTION_LENGTH];
-    unsigned int path_length;
-    int bot_id;
+    int32_t action_stream[MAX_SOLUTION_LENGTH];
+    int32_t exclusion_stream[MAX_SOLUTION_LENGTH];
+    uint32_t path_length;
+    int32_t bot_id;
 } Gestalt_path_stream_t;
 
 typedef struct {
-    Gestalt_path_stream_t* path_stream_vector[MAX_BOTS];
-    unsigned int num_path_streams;
+    Gestalt_path_stream_t path_stream_vector[MAX_BOTS];
+    uint8_t num_path_streams;
 } Gestalt_path_stream_sol_t;
 
-// Upload the pathstream solution
-void gestalt_update_pathstream_sol(Gestalt_path_stream_sol_t* path);
+// After completing the serial read, deserialize the buffer into a Gestalt_path_stream_sol_t
+void gestalt_deserialize_solution(uint8_t* solution_buffer, uint16_t solution_num_bytes);
 
 // Receive sensor data
 void gestalt_update_sensor_data(const Gestalt_sensor_data_t* sensor_data);

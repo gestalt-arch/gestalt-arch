@@ -73,7 +73,8 @@ void ser_rx_data(uint8_t* data, size_t size) {
 		case 1:
 		{
 			// Read num_bytes
-			solution_num_bytes = (data[i] << 8) | data[i + 1]; // unsafe read
+			// little endian
+			solution_num_bytes = data[i] | (data[i + 1] << 8); // unsafe read
 			printf("Total num_bytes in solution : %hu\n", solution_num_bytes);
 			uart_rx_state = 2;
 			i += 1; // skip next byte
@@ -84,6 +85,8 @@ void ser_rx_data(uint8_t* data, size_t size) {
 			if (uart_rx_write_head + 4 == solution_num_bytes) { // write_head starts after first 4 bytes passed
 																// TODO: check for \n here?
 				uart_rx_state = 3;
+				// Give the solution buffer to gestalt-client for deserialization & storage
+				gestalt_deserialize_solution(solution_buffer, solution_num_bytes);
 			}
 			else {
 				solution_buffer[uart_rx_write_head++] = data[i];
