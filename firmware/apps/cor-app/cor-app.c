@@ -1,22 +1,17 @@
 #include "cor-app.h"
 #include <math.h>
 
+#define DRIVE_SPEED 100
+#define TURN_SPEED 100
+
 // initialize state and state variables
 KobukiState_t state = STOP;
 KobukiSensors_t sensors = { 0 };
-uint32_t timer = 0;
+uint8_t timer = 0;
 Gestalt_status_t status;
 float cur_pos_error;
 float cur_theta_error;
-Gestalt_goal_t goal;
-float x_goal;
-float y_goal;
 Gestalt_action_t action;
-int goal_complete = 0;
-int a_velocity = 0;
-int l_velocity = 0;
-
-
 
 // UART over Virtual COM port
 uint8_t uart_rx_state = 0; // 0 - nothing read 
@@ -109,15 +104,6 @@ void ser_rx_data(uint8_t* data, size_t size) {
 	}
 }
 
-
-void drive(int l_velocity) {
-	kobukiDriveDirect(l_velocity * 100, l_velocity * 100);
-}
-
-void turn(int a_velocity) {
-	kobukiDriveDirect(-a_velocity * 100, a_velocity * 100);
-}
-
 void corapp_run()
 {
 	// read sensors from robot
@@ -127,10 +113,7 @@ void corapp_run()
 	cur_pos_error = status.pos_error;
     cur_theta_error = status.theta_error;
 
-	goal = gestalt_get_current_goal();
-	x_goal = curr_x_goal;
-	y_goal = curr_y_goal;
-    action = goal.curr_action_goal;
+    action = gestalt_get_current_action();
 
 	// test current state
 	switch (state) {
@@ -165,9 +148,7 @@ void corapp_run()
 				Stop
 			*/
 			else {
-				l_velocity = 0;
-				a_velocity = 0;
-				drive(l_velocity);
+				kobukiDriveDirect(0, 0);
 				gestalt_send_goal_complete();
 			}
 			break;
@@ -177,21 +158,23 @@ void corapp_run()
 			*/
 			if (cur_theta_error <= -0.5) {
 				state = ALIGN_CW;
-				l_velocity = 0;
 			}
 			/*
 				ALIGN_CCW
 			*/
 			else if (cur_theta_error >= 0.5) {
 				state = ALIGN_CCW;
-				l_velocity = 0;
 			}
 			/*
 				DRIVE
 			*/
+			else if (cur_pos_error <= 0.1) {
+				state = STOP;
+				gestalt_send_goal_complete();
+				kobukiDriveDirect(0, 0);
+			}
 			else {
-				l_velocity = 1;
-				drive(l_velocity);
+				kobukiDriveDirect(DRIVE_SPEED, DRIVE_SPEED);
 			}
 			break;
 		case ALIGN_CW:
@@ -205,15 +188,56 @@ void corapp_run()
 				ALIGN_CW
 			*/
 			else {
-				a_velocity = 1;
-				turn(a_velocity);
+				kobukiDriveDirect(-DRIVE_SPEED, DRIVE_SPEED);
 			}
 			break;
 		case ALIGN_CCW:
+			/*
+				DRIVE
+			*/
+			if (fabs(cur_theta_error) <= 0.5) {
+				state = DRIVE;
+			}
+			/*
+				ALIGN_CCW
+			*/
+			else {
+				kobukiDriveDirect(DRIVE_SPEED, -DRIVE_SPEED);
+			}
 			break;
 		case GRAB:
+			/*
+				STOP
+			*/
+			if (timer >= 5) {
+				state = STOP;
+				gestalt_send_goal_complete();
+				kobukiDriveDirect(0, 0);
+			}
+			/*
+				GRAB
+			*/
+			else {
+				//grab
+				timer += 1;
+			}
 			break;
 		case RELEASE:
+			/*
+				STOP
+			*/
+			if (timer >= 5) {
+				state = STOP;
+				gestalt_send_goal_complete();
+				kobukiDriveDirect(0, 0);
+			}
+			/*
+				RELEASE
+			*/
+			else {
+				//grelease
+				timer += 1;
+			}
 			break;
 	}
 
