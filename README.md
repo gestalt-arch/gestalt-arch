@@ -26,7 +26,7 @@ We demonstrate a decentralized robot control architecture by which a user-contro
 
 ## Cloning
 
-The project uses the Berkeley Buckler repo as a submodule
+The project uses a fork of the Berkeley Buckler repo as a submodule https://github.com/gestalt-arch/buckler-ext
 
 1. Clone as usual
 ```
