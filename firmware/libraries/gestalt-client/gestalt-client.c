@@ -1,7 +1,12 @@
 #include "gestalt-client.h"
 
 
+// The complete path stream solution
 static Gestalt_path_stream_sol_t ps_solution;
+
+// The path stream for this bot to follow
+// determined after
+static Gestalt_path_stream_t target_ps;
 
 
 static void deserialize_path_stream(uint8_t* path_stream, uint32_t path_length, uint8_t ps_idx) {
@@ -59,10 +64,20 @@ void gestalt_deserialize_solution(uint8_t* solution_buffer, uint16_t solution_nu
 	uint32_t read_ptr = 0;
 	ps_solution.num_path_streams = solution_buffer[read_ptr++];
 
-	uint32_t path_length;
+	uint8_t path_length;
 	for (uint8_t i = 0; i < ps_solution.num_path_streams; i++) {
 		path_length = solution_buffer[read_ptr++];
 		deserialize_path_stream((solution_buffer+read_ptr), path_length, i);
 		read_ptr += path_length + 1;
 	}
+}
+
+
+// Initialize the gestalt client
+// Must be called AFTER providing the deserialized solution via gestalt_deserialize_solution
+// Must be called BEFORE calling any other gestalt client functions
+// 
+// Provide the bot id
+void gestalt_init(uint8_t bot_id) {
+
 }
