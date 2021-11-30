@@ -1,0 +1,3 @@
+[submodule "firmware/buckler-ext"]
+	path = firmware/buckler-ext
+	url = https://github.com/gestalt-arch/buckler-ext.git
