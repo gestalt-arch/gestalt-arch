@@ -1,28 +1,28 @@
 #include "gestalt-client.h"
 
 
-static Gestalt_path_stream_sol_t path_stream_solution;
+// The complete path stream solution
+static Gestalt_path_stream_sol_t ps_solution;
+
+// The path stream for this bot to follow
+// determined after
+static Gestalt_path_stream_t target_ps;
 
 
 static void deserialize_path_stream(uint8_t* path_stream, uint32_t path_length, uint8_t ps_idx) {
 	uint32_t r_ptr = 0;
 	uint32_t tmp_word;
 
-	path_stream_solution.path_stream_vector[ps_idx].path_length = path_length;
+	ps_solution.path_stream_vector[ps_idx].path_length = path_length;
 
-	tmp_word = (path_stream[r_ptr] | 
-		path_stream[r_ptr + 1] << 8 | 
-		path_stream[r_ptr + 2] << 16 | 
-		path_stream[r_ptr + 3] << 24);
-	path_stream_solution.path_stream_vector[ps_idx].bot_id = (int32_t)tmp_word;
-	r_ptr += 4;
+	ps_solution.path_stream_vector[ps_idx].bot_id = (uint8_t)path_stream[r_ptr++];
 	// x_pos_stream
 	for (uint32_t i = 0; i < path_length; i ++) {
 		tmp_word = (path_stream[r_ptr] |
 			path_stream[r_ptr + 1] << 8 |
 			path_stream[r_ptr + 2] << 16 |
 			path_stream[r_ptr + 3] << 24);
-		path_stream_solution.path_stream_vector[ps_idx].x_pos_stream[i] = (
+		ps_solution.path_stream_vector[ps_idx].x_pos_stream[i] = (
 			*((float*)&tmp_word)
 			);
 		r_ptr += 4;
@@ -33,7 +33,7 @@ static void deserialize_path_stream(uint8_t* path_stream, uint32_t path_length, 
 			path_stream[r_ptr + 1] << 8 |
 			path_stream[r_ptr + 2] << 16 |
 			path_stream[r_ptr + 3] << 24);
-		path_stream_solution.path_stream_vector[ps_idx].y_pos_stream[i] = (
+		ps_solution.path_stream_vector[ps_idx].y_pos_stream[i] = (
 			*((float*)&tmp_word)
 			);
 		r_ptr += 4;
@@ -44,7 +44,7 @@ static void deserialize_path_stream(uint8_t* path_stream, uint32_t path_length, 
 			path_stream[r_ptr + 1] << 8 |
 			path_stream[r_ptr + 2] << 16 |
 			path_stream[r_ptr + 3] << 24);
-		path_stream_solution.path_stream_vector[ps_idx].action_stream[i] = (int32_t)tmp_word;
+		ps_solution.path_stream_vector[ps_idx].action_stream[i] = (int32_t)tmp_word;
 		r_ptr += 4;
 	}
 	// exclusion_stream
@@ -53,22 +53,31 @@ static void deserialize_path_stream(uint8_t* path_stream, uint32_t path_length, 
 			path_stream[r_ptr + 1] << 8 |
 			path_stream[r_ptr + 2] << 16 |
 			path_stream[r_ptr + 3] << 24);
-		path_stream_solution.path_stream_vector[ps_idx].exclusion_stream[i] = (int32_t)tmp_word;
+		ps_solution.path_stream_vector[ps_idx].exclusion_stream[i] = (int32_t)tmp_word;
 		r_ptr += 4;
 	}
-
 }
 
 // After completing the serial read, deserialize the buffer into a Gestalt_path_stream_sol_t
 void gestalt_deserialize_solution(uint8_t* solution_buffer, uint16_t solution_num_bytes)
 {
 	uint32_t read_ptr = 0;
-	path_stream_solution.num_path_streams = solution_buffer[read_ptr++];
+	ps_solution.num_path_streams = solution_buffer[read_ptr++];
 
-	uint32_t path_length;
-	for (uint8_t i = 0; i < path_stream_solution.num_path_streams; i++) {
+	uint8_t path_length;
+	for (uint8_t i = 0; i < ps_solution.num_path_streams; i++) {
 		path_length = solution_buffer[read_ptr++];
 		deserialize_path_stream((solution_buffer+read_ptr), path_length, i);
 		read_ptr += path_length + 1;
 	}
+}
+
+
+// Initialize the gestalt client
+// Must be called AFTER providing the deserialized solution via gestalt_deserialize_solution
+// Must be called BEFORE calling any other gestalt client functions
+// 
+// Provide the bot id
+void gestalt_init(uint8_t bot_id) {
+
 }
