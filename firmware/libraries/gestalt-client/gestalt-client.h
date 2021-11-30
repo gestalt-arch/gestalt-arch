@@ -42,17 +42,17 @@ typedef struct {
 } Gestalt_sensor_data_t;
 
 typedef struct {
+    uint8_t path_length;
+    uint8_t bot_id;
     float x_pos_stream[MAX_SOLUTION_LENGTH];
     float y_pos_stream[MAX_SOLUTION_LENGTH];
     int32_t action_stream[MAX_SOLUTION_LENGTH];
     int32_t exclusion_stream[MAX_SOLUTION_LENGTH];
-    uint32_t path_length;
-    int32_t bot_id;
 } Gestalt_path_stream_t;
 
 typedef struct {
-    Gestalt_path_stream_t path_stream_vector[MAX_BOTS];
     uint8_t num_path_streams;
+    Gestalt_path_stream_t path_stream_vector[MAX_BOTS];
 } Gestalt_path_stream_sol_t;
 
 // After completing the serial read, deserialize the buffer into a Gestalt_path_stream_sol_t
