@@ -118,56 +118,40 @@ void corapp_run()
 	// test current state
 	switch (state) {
 		case STOP:
-			/*
-				ALIGN_CW
-			*/
+			//	STOP to ALIGN_CW
 			if (action == GESTALT_MOVE && cur_theta_error < 0) {
 				state = ALIGN_CW;
 			}
-			/*
-				ALIGN_CCW
-			*/
+			// STOP to ALIGN_CCW
 			else if (action == GESTALT_MOVE && cur_theta_error > 0) {
 				state = ALIGN_CCW;
 			}
-			/*
-				Grab
-			*/
+			//	STOP to Grab
 			else if (action == GESTALT_GRAB) {
 				state = GRAB;
 				timer = 0;
 			} 
-			/*
-				Release
-			*/
+			//	STOP to Release
 			else if (action == GESTALT_DROP) {
 				state = RELEASE;
 				timer = 0;
 			}
-			/*
-				Stop
-			*/
+			//	STOP
 			else {
 				kobukiDriveDirect(0, 0);
 				gestalt_send_goal_complete();
 			}
 			break;
 		case DRIVE:
-			/*
-				ALIGN_CW
-			*/
+			//	DRIVE to ALIGN_CW
 			if (cur_theta_error <= -0.5) {
 				state = ALIGN_CW;
 			}
-			/*
-				ALIGN_CCW
-			*/
+			//	DRIVE to ALIGN_CCW
 			else if (cur_theta_error >= 0.5) {
 				state = ALIGN_CCW;
 			}
-			/*
-				DRIVE
-			*/
+			//	DRIVE
 			else if (cur_pos_error <= 0.1) {
 				state = STOP;
 				gestalt_send_goal_complete();
@@ -178,68 +162,51 @@ void corapp_run()
 			}
 			break;
 		case ALIGN_CW:
-			/*
-				DRIVE
-			*/
+			//	ALIGN_CW to DRIVE
 			if (fabs(cur_theta_error) <= 0.5) {
 				state = DRIVE;
 			}
-			/*
-				ALIGN_CW
-			*/
+			//	ALIGN_CW
 			else {
 				kobukiDriveDirect(-DRIVE_SPEED, DRIVE_SPEED);
 			}
 			break;
 		case ALIGN_CCW:
-			/*
-				DRIVE
-			*/
+			// ALIGN_CCW to DRIVE
 			if (fabs(cur_theta_error) <= 0.5) {
 				state = DRIVE;
 			}
-			/*
-				ALIGN_CCW
-			*/
+			// ALIGN_CCW to ALIGN_CCW
 			else {
 				kobukiDriveDirect(DRIVE_SPEED, -DRIVE_SPEED);
 			}
 			break;
 		case GRAB:
-			/*
-				STOP
-			*/
+			//	GRAB to STOP
 			if (timer >= 5) {
 				state = STOP;
 				gestalt_send_goal_complete();
 				kobukiDriveDirect(0, 0);
 			}
-			/*
-				GRAB
-			*/
+			//	GRAB
 			else {
 				//grab
 				timer += 1;
 			}
 			break;
 		case RELEASE:
-			/*
-				STOP
-			*/
+			//	RELEASE to STOP
 			if (timer >= 5) {
 				state = STOP;
 				gestalt_send_goal_complete();
 				kobukiDriveDirect(0, 0);
 			}
-			/*
-				RELEASE
-			*/
+			// RELEASE
 			else {
-				//grelease
+				//release
 				timer += 1;
 			}
 			break;
 	}
-
 	// continue for 10 ms before checking state again
 }
