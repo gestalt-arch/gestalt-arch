@@ -5,10 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define NUM_ELEMENT 37
-#define LIDAR_WIDTH 30
-#define POLE_1_WIDTH 50
-#define POLE_2_WIDTH 70
+#define NUM_ELEMENT 420
+#define LIDAR_WIDTH .9
+#define POLE_1_WIDTH 1.2
+#define POLE_2_WIDTH 1.7
 
 //uint16_t NUM_ELEMENT; //Make const later,
 
@@ -59,8 +59,8 @@ float get_width(float theta1, float theta2, float distance1, float distance2) {
 	return sqrtf(distance1 * distance1 + distance2 * distance2 - 2 * distance1 * distance2 * cosf((theta2 - theta1)*0.0175));
 }
 
-#define delta 20
-#define delta_ 3
+#define delta .25
+#define delta_ .2
 classification_t classify(float* distance, float* theta, uint8_t num_objects) {
 	int found = 0;
 	int in_object = 0;
