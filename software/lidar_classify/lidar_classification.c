@@ -9,13 +9,16 @@
 #define LIDAR_WIDTH .9
 #define POLE_1_WIDTH 1.2
 #define POLE_2_WIDTH 1.7
+
+#define LIDAR_RADIUS .5
+#define POLE_1_RADIUS .75
+#define POLE_2_RADIUS 1
+
 #define DEG_TO_RAD 0.0174533
 #define POLE_1_X 10.43108
 #define POLE_1_Y -1.644364
 #define POLE_2_X -8.56922
 #define POLE_2_Y -10.64436
-
-//uint16_t NUM_ELEMENT; //Make const later,
 
 /*
 	REMOVE. For testing purposes.
@@ -65,18 +68,13 @@ float get_width(float theta1, float theta2, float distance1, float distance2) {
 }
 
 void get_loc(struct coordinate* cord, float pole1_theta, float pole1_distance, float pole2_theta, float pole2_distance) {
-	float delta_y_1 = pole1_distance * cosf(pole1_theta * DEG_TO_RAD);
-	float delta_x_1 = pole1_distance * sinf(pole1_theta * DEG_TO_RAD);
-	float delta_y_2 = pole2_distance * cosf(pole2_theta * DEG_TO_RAD);
-	float delta_x_2 = pole2_distance * sinf(pole2_theta * DEG_TO_RAD);
-
-	float a1 = -delta_y_1 / delta_x_1;
+	float a1 = -1 / tanf(pole1_theta * DEG_TO_RAD);
 	float b1 = 1;
-	float c1 = POLE_1_Y + delta_y_1 / delta_x_1 * (-POLE_1_X);
+	float c1 = (POLE_1_Y) - (1 / tanf(pole1_theta * DEG_TO_RAD)) * (POLE_1_X);
 
-	float a2 = -delta_y_2 / delta_x_2;
+	float a2 = -1 / tanf(pole2_theta * DEG_TO_RAD);
 	float b2 = 1;
-	float c2 = POLE_2_Y + delta_y_2 / delta_x_2 * (-POLE_2_X);
+	float c2 = (POLE_2_Y) - (1 / tanf(pole2_theta * DEG_TO_RAD)) * (POLE_2_X);
 
 	float x = (b2 * c1 - b1 * c2) / (a1 * b2 - a2 * b1);
 	float y = (a1 * c2 - a2 * c1) / (a1 * b2 - a2 * b1);
@@ -127,7 +125,7 @@ classification_t classify(float* distance, float* theta, uint8_t num_objects) {
 			distance1 = distance[indices[i][0]];
 			distance2 = distance[indices[i][1]];
 
-			size_t index = ceil((indices[i][0] + indices[i][1])/2);
+			//size_t index = ceil((indices[i][0] + indices[i][1])/2);
 
 			printf("FOUND OBJECT\n");
 			printf("theta1: %f\n", theta1);
@@ -142,18 +140,17 @@ classification_t classify(float* distance, float* theta, uint8_t num_objects) {
 			}
 			else if (fabs(width - POLE_1_WIDTH) <= delta_) {
 				printf("OBJECT IS TYPE POLE1\n");
-				//pole1_theta = fabs(theta1 + theta2) / 2;
-				//pole1_distance = fabs(distance1 + distance2) / 2;
-				pole1_theta = theta[index];
-				pole1_distance = distance[index];
-
+				pole1_theta = fabs(theta1 + theta2) / 2;
+				pole1_distance = fabs(distance1 + distance2) / 2;
+				//pole1_theta = theta[index];
+				//pole1_distance = distance[index];
 			}
 			else if (fabs(width - POLE_2_WIDTH) <= delta_) {
 				printf("OBJECT IS TYPE POLE2\n");
-				//pole2_theta = fabs(theta1 + theta2) / 2;
-				//pole2_distance = fabs(distance1 + distance2) / 2;
-				pole2_theta = theta[index];
-				pole2_distance = distance[index];
+				pole2_theta = fabs(theta1 + theta2) / 2;
+				pole2_distance = fabs(distance1 + distance2) / 2;
+				//pole2_theta = theta[index];
+				//pole2_distance = distance[index];
 			}
 			else {
 				printf("INVALID WIDTH!");
@@ -170,7 +167,6 @@ classification_t classify(float* distance, float* theta, uint8_t num_objects) {
 		printf("pole1distance: %f\n", pole1_distance);
 		printf("pole2distance: %f\n", pole2_distance);
 		printf("BOT POSITION = (%f, %f)\n", cord.x, cord.y);
-		
 	}
 
 	if (found != num_objects) {
@@ -179,8 +175,6 @@ classification_t classify(float* distance, float* theta, uint8_t num_objects) {
 
 	return LC_SUCCESS;
 }
-
-
 
 int main(int argc, char **argv) {
 	uint16_t MAX_SIZE = ceil(3000 / 7);
