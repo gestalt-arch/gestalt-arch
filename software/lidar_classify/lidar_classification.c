@@ -9,6 +9,11 @@
 #define LIDAR_WIDTH .9
 #define POLE_1_WIDTH 1.2
 #define POLE_2_WIDTH 1.7
+#define DEG_TO_RAD 0.0174533
+#define POLE_1_X 10.43108
+#define POLE_1_Y -1.644364
+#define POLE_2_X -8.56922
+#define POLE_2_Y -10.64436
 
 //uint16_t NUM_ELEMENT; //Make const later,
 
@@ -56,10 +61,31 @@ void print(float* distance, float* theta, uint8_t num_objects) {
 }
  
 float get_width(float theta1, float theta2, float distance1, float distance2) {
-	return sqrtf(distance1 * distance1 + distance2 * distance2 - 2 * distance1 * distance2 * cosf((theta2 - theta1)*0.0175));
+	return sqrtf(distance1 * distance1 + distance2 * distance2 - 2 * distance1 * distance2 * cosf((theta2 - theta1) * DEG_TO_RAD));
 }
 
-#define delta .25
+void get_loc(struct coordinate* cord, float pole1_theta, float pole1_distance, float pole2_theta, float pole2_distance) {
+	float delta_y_1 = pole1_distance * cosf(pole1_theta * DEG_TO_RAD);
+	float delta_x_1 = pole1_distance * sinf(pole1_theta * DEG_TO_RAD);
+	float delta_y_2 = pole2_distance * cosf(pole2_theta * DEG_TO_RAD);
+	float delta_x_2 = pole2_distance * sinf(pole2_theta * DEG_TO_RAD);
+
+	float a1 = -delta_y_1 / delta_x_1;
+	float b1 = 1;
+	float c1 = POLE_1_Y + delta_y_1 / delta_x_1 * (-POLE_1_X);
+
+	float a2 = -delta_y_2 / delta_x_2;
+	float b2 = 1;
+	float c2 = POLE_2_Y + delta_y_2 / delta_x_2 * (-POLE_2_X);
+
+	float x = (b2 * c1 - b1 * c2) / (a1 * b2 - a2 * b1);
+	float y = (a1 * c2 - a2 * c1) / (a1 * b2 - a2 * b1);
+
+	cord->x = x;
+	cord->y = y;
+}
+
+#define delta .35
 #define delta_ .2
 classification_t classify(float* distance, float* theta, uint8_t num_objects) {
 	int found = 0;
@@ -80,45 +106,75 @@ classification_t classify(float* distance, float* theta, uint8_t num_objects) {
 		}
 	}
 
-	printf("%u", found);
+	printf("Found: %u Objects\n", found);
+
+	if (found <= num_objects) {
+		float width;
+		float theta1;
+		float theta2;
+		float distance1;
+		float distance2;
+
+		float pole1_theta;
+		float pole1_distance;
+
+		float pole2_theta;
+		float pole2_distance;
+
+		for (uint8_t i = 0; i < found; i++) {
+			theta1 = theta[indices[i][0]];
+			theta2 = theta[indices[i][1]];
+			distance1 = distance[indices[i][0]];
+			distance2 = distance[indices[i][1]];
+
+			size_t index = ceil((indices[i][0] + indices[i][1])/2);
+
+			printf("FOUND OBJECT\n");
+			printf("theta1: %f\n", theta1);
+			printf("theta2: %f\n", theta2);
+			printf("distance1: %f\n", distance1);
+			printf("distance2: %f\n", distance2);
+			width = get_width(theta1, theta2, distance1, distance2);
+			printf("width: %f\n", width);
+
+			if (fabs(width - LIDAR_WIDTH) <= delta_) {
+				printf("OBJECT IS TYPE LIDAR\n");
+			}
+			else if (fabs(width - POLE_1_WIDTH) <= delta_) {
+				printf("OBJECT IS TYPE POLE1\n");
+				//pole1_theta = fabs(theta1 + theta2) / 2;
+				//pole1_distance = fabs(distance1 + distance2) / 2;
+				pole1_theta = theta[index];
+				pole1_distance = distance[index];
+
+			}
+			else if (fabs(width - POLE_2_WIDTH) <= delta_) {
+				printf("OBJECT IS TYPE POLE2\n");
+				//pole2_theta = fabs(theta1 + theta2) / 2;
+				//pole2_distance = fabs(distance1 + distance2) / 2;
+				pole2_theta = theta[index];
+				pole2_distance = distance[index];
+			}
+			else {
+				printf("INVALID WIDTH!");
+				return LC_FAIL;
+			}
+		}
+
+		struct coordinate cord;
+
+		get_loc(&cord, pole1_theta, pole1_distance, pole2_theta, pole2_distance);
+
+		printf("pole1theta: %f\n", pole1_theta);
+		printf("pole2theta: %f\n", pole2_theta);
+		printf("pole1distance: %f\n", pole1_distance);
+		printf("pole2distance: %f\n", pole2_distance);
+		printf("BOT POSITION = (%f, %f)\n", cord.x, cord.y);
+		
+	}
 
 	if (found != num_objects) {
 		return LC_FAIL;
-	}
-
-	float width;
-	float theta1;
-	float theta2;
-	float distance1;
-	float distance2;
-
-	for (uint8_t i = 0; i < num_objects; i++) {
-		theta1 = theta[indices[i][0]];
-		theta2 = theta[indices[i][1]];
-		distance1 = distance[indices[i][0]];
-		distance2 = distance[indices[i][1]];
-
-		printf("FOUND OBJECT\n");
-		printf("theta1: %f\n", theta1);
-		printf("theta2: %f\n", theta2);
-		printf("distance1: %f\n", distance1);
-		printf("distance2: %f\n", distance2);
-		width = get_width(theta1, theta2, distance1, distance2);
-		printf("width: %f\n", width);
-
-		if (fabs(width - LIDAR_WIDTH) <= delta_) {
-			printf("OBJECT IS TYPE LIDAR\n");
-		}
-		else if (fabs(width - POLE_1_WIDTH) <= delta_) {
-			printf("OBJECT IS TYPE POLE1\n");
-		}
-		else if (fabs(width - POLE_2_WIDTH) <= delta_) {
-			printf("OBJECT IS TYPE POLE2\n");
-		}
-		else {
-			printf("INVALID WIDTH!");
-			return LC_FAIL;
-		}
 	}
 
 	return LC_SUCCESS;

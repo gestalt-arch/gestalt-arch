@@ -9,3 +9,8 @@ typedef enum object_t {
   	POLE_1,
   	POLE_2
 } object_t;
+
+typedef struct coordinate {
+	float x;
+	float y;
+} coordinate;
