@@ -1,4 +1,4 @@
-
+#include "ydlidar_x2.h"
 #include "kobukiSensorTypes.h"
 #include <stdint.h>
 
@@ -71,8 +71,8 @@ void gestalt_update_sensor_data(const Gestalt_sensor_data_t* sensor_data);
 // Inform gestalt client that the active goal is complete
 void gestalt_send_goal_complete();
 
-// Returns the current goal position and action
-Gestalt_goal_t gestalt_get_current_goal();
+// Returns the current action
+Gestalt_action_t gestalt_get_current_action();
 
 // Returns the current status struct with all information for FSM and connectivity
 Gestalt_status_t gestalt_get_current_status();

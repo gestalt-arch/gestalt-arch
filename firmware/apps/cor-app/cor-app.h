@@ -1,4 +1,3 @@
-#include "ydlidar_x2.h"
 #include "gestalt-client.h"
 
 #include "nrf.h"
