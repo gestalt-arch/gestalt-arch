@@ -1,6 +1,10 @@
 #include "ydlidar_x2.h"
 #include "gestalt-client.h"
+
 #include "nrf.h"
+#include "nrf_uarte.h"
+#include "nrf_serial.h"
+
 
 
 typedef enum {
