@@ -9,9 +9,6 @@
 #include "nrf_delay.h"
 #include "buckler.h"
 
-
-
-
 typedef enum {
   STOP,
   DRIVE,
