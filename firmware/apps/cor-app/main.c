@@ -31,14 +31,13 @@
 // I2C manager
 NRF_TWI_MNGR_DEF(twi_mngr_instance, 5, 0);
 
-
 // UART Serial configuration
 NRF_SERIAL_DRV_UART_CONFIG_DEF(m_uart0_drv_config,
-	BUCKLER_UART_RX, BUCKLER_UART_TX,
-	0, 0,
-	NRF_UART_HWFC_DISABLED, NRF_UART_PARITY_EXCLUDED,
-	NRF_UART_BAUDRATE_115200,
-	UART_DEFAULT_CONFIG_IRQ_PRIORITY);
+							   BUCKLER_UART_RX, BUCKLER_UART_TX,
+							   0, 0,
+							   NRF_UART_HWFC_DISABLED, NRF_UART_PARITY_EXCLUDED,
+							   NRF_UART_BAUDRATE_115200,
+							   UART_DEFAULT_CONFIG_IRQ_PRIORITY);
 
 #define SERIAL_FIFO_TX_SIZE 512
 #define SERIAL_FIFO_RX_SIZE 512
@@ -51,12 +50,12 @@ NRF_SERIAL_QUEUES_DEF(serial_queue, SERIAL_FIFO_TX_SIZE, SERIAL_FIFO_RX_SIZE);
 NRF_SERIAL_BUFFERS_DEF(serial_buffs, SERIAL_BUFF_TX_SIZE, SERIAL_BUFF_RX_SIZE);
 
 NRF_SERIAL_CONFIG_DEF(serial_config, NRF_SERIAL_MODE_DMA,
-	&serial_queue, &serial_buffs, ser_event_handler, NULL);
+					  &serial_queue, &serial_buffs, ser_event_handler, NULL);
 
 NRF_SERIAL_UART_DEF(serial_uart, 0);
 
-
-int main(void) {
+int main(void)
+{
 
 	// initialize Kobuki library
 	kobukiInit();
@@ -77,21 +76,20 @@ int main(void) {
 	// initialize display
 	nrf_drv_spi_t spi_instance = NRF_DRV_SPI_INSTANCE(1);
 	nrf_drv_spi_config_t spi_config = {
-	  .sck_pin = BUCKLER_LCD_SCLK,
-	  .mosi_pin = BUCKLER_LCD_MOSI,
-	  .miso_pin = BUCKLER_LCD_MISO,
-	  .ss_pin = BUCKLER_LCD_CS,
-	  .irq_priority = NRFX_SPI_DEFAULT_CONFIG_IRQ_PRIORITY,
-	  .orc = 0,
-	  .frequency = NRF_DRV_SPI_FREQ_4M,
-	  .mode = NRF_DRV_SPI_MODE_2,
-	  .bit_order = NRF_DRV_SPI_BIT_ORDER_MSB_FIRST
-	};
+		.sck_pin = BUCKLER_LCD_SCLK,
+		.mosi_pin = BUCKLER_LCD_MOSI,
+		.miso_pin = BUCKLER_LCD_MISO,
+		.ss_pin = BUCKLER_LCD_CS,
+		.irq_priority = NRFX_SPI_DEFAULT_CONFIG_IRQ_PRIORITY,
+		.orc = 0,
+		.frequency = NRF_DRV_SPI_FREQ_4M,
+		.mode = NRF_DRV_SPI_MODE_2,
+		.bit_order = NRF_DRV_SPI_BIT_ORDER_MSB_FIRST};
 	error_code = nrf_drv_spi_init(&spi_instance, &spi_config, NULL, NULL);
 	APP_ERROR_CHECK(error_code);
 	display_init(&spi_instance);
 
-	display_write("Hello, Human!", DISPLAY_LINE_0);
+	display_write("Goodbye, Human!", DISPLAY_LINE_0);
 	printf("Display initialized!\n");
 
 	nrf_delay_ms(2000);
@@ -103,9 +101,9 @@ int main(void) {
 	// initialize UART
 	nrf_serial_init(&serial_uart, &m_uart0_drv_config, &serial_config);
 
-	while (1) {
+	while (1)
+	{
 		corapp_run();
 		nrf_delay_ms(1);
 	}
 }
-
