@@ -12,7 +12,7 @@ typedef enum {
   STOP,
   DRIVE,
   ALIGN_CW,
-  ALIGN_CCW,
+  ALIGN_CCW
 } KobukiState_t;
 
 void ser_event_handler(nrf_serial_t const* p_serial, nrf_serial_event_t event);
