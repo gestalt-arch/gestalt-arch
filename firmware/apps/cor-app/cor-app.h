@@ -13,8 +13,6 @@ typedef enum {
   DRIVE,
   ALIGN_CW,
   ALIGN_CCW,
-  GRAB,
-  RELEASE
 } KobukiState_t;
 
 void ser_event_handler(nrf_serial_t const* p_serial, nrf_serial_event_t event);

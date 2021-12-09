@@ -35,16 +35,6 @@ void corapp_run()
 			else if (action == GESTALT_MOVE && cur_theta_error > 0) {
 				state = ALIGN_CCW;
 			}
-			//	STOP to Grab
-			else if (action == GESTALT_GRAB) {
-				state = GRAB;
-				timer = 0;
-			} 
-			//	STOP to Release
-			else if (action == GESTALT_DROP) {
-				state = RELEASE;
-				timer = 0;
-			}
 			//	STOP
 			else {
 				kobukiDriveDirect(0, 0);
@@ -88,32 +78,6 @@ void corapp_run()
 			// ALIGN_CCW to ALIGN_CCW
 			else {
 				kobukiDriveDirect(DRIVE_SPEED, -DRIVE_SPEED);
-			}
-			break;
-		case GRAB:
-			//	GRAB to STOP
-			if (timer >= 5) {
-				state = STOP;
-				gestalt_send_goal_complete();
-				kobukiDriveDirect(0, 0);
-			}
-			//	GRAB
-			else {
-				//grab
-				timer += 1;
-			}
-			break;
-		case RELEASE:
-			//	RELEASE to STOP
-			if (timer >= 5) {
-				state = STOP;
-				gestalt_send_goal_complete();
-				kobukiDriveDirect(0, 0);
-			}
-			// RELEASE
-			else {
-				//release
-				timer += 1;
 			}
 			break;
 	}
