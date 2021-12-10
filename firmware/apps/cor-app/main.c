@@ -55,8 +55,10 @@ int main(void) {
 	// Do not init serial, not enough memory
 	//nrf_serial_init(&serial_uart, &m_uart0_drv_config, &serial_config);
 
+	KobukiSensors_t sensors;
+	kobukiSensorPoll(&sensors);
 	// Initialize gestalt-client
-	gestalt_init(GESTALT_BOT_ID);
+	gestalt_init(GESTALT_BOT_ID, &sensors);
 
 	while (1) {
 		corapp_run();

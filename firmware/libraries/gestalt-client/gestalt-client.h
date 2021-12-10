@@ -1,6 +1,7 @@
 #include "ydlidar_x2.h"
 #include "kobukiSensorTypes.h"
 #include <stdint.h>
+#include <math.h>
 
 #define MAX_SOLUTION_LENGTH 8
 #define MAX_BOTS 3
@@ -63,7 +64,7 @@ void gestalt_deserialize_solution(uint8_t* solution_buffer, uint16_t solution_nu
 // Must be called BEFORE calling any other gestalt client functions
 // 
 // Provide the bot id
-void gestalt_init(uint8_t bot_id);
+void gestalt_init(uint8_t bot_id, KobukiSensors_t* kobuki_sensors);
 
 // Update the sensor data and all internal state space representations
 void gestalt_update_sensor_data(KobukiSensors_t* kobuki_sensors);
