@@ -38,8 +38,8 @@ public class LidarSweep : MonoBehaviour
                 print("Rotating...");
                 if (Physics.Raycast(transform.position, transform.forward, out hit, 100.0f))
                 {
-                    transform.Rotate(0f, 0.857f, 0f);
-                    cur_deg = cur_deg + 0.857f;
+                    transform.Rotate(0f, DEGREES / FRAMES, 0f);
+                    cur_deg = cur_deg + DEGREES / FRAMES;
 
                     sw.WriteLine(cur_deg);
                     sw2.WriteLine(hit.distance);
@@ -58,4 +58,4 @@ public class LidarSweep : MonoBehaviour
         }
     }
 }
-   
+
