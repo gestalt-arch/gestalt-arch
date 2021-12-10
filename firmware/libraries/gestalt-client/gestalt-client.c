@@ -8,11 +8,19 @@ static Gestalt_path_stream_sol_t ps_solution;
 // determined after
 static Gestalt_path_stream_t target_ps;
 
+// Contains all info regarding the current status of the robot
 static Gestalt_status_t curr_status;
 
+// Contains the goal position and action of the bot
+static Gestalt_goal_t curr_goal;
 
+inline float get_2d_dist(float x1, float y1, float x2, float y2)
+{
+	sqrtf(powf(x2-x1, 2) + powf(y2-y1, 2));
+}
 
-static void deserialize_path_stream(uint8_t* path_stream, uint32_t path_length, uint8_t ps_idx) {
+static void deserialize_path_stream(uint8_t* path_stream, uint32_t path_length, uint8_t ps_idx) 
+{
 	uint32_t r_ptr = 0;
 	uint32_t tmp_word;
 
@@ -75,24 +83,68 @@ void gestalt_deserialize_solution(uint8_t* solution_buffer, uint16_t solution_nu
 	}
 }
 
+// For debugging, hardcode a test path as a series of waypoints
+void gestalt_init_test_path() 
+{
+	ps_solution.num_path_streams = 3;
+	for (int i = 0; i < ps_solution.num_path_streams; i++) {
+		ps_solution.path_stream_vector[i].bot_id = i + 1;
+		ps_solution.path_stream_vector[i].path_length = 4;
+		
+		ps_solution.path_stream_vector[i].x_pos_stream[0] = 0.0f;
+		ps_solution.path_stream_vector[i].y_pos_stream[0] = 0.0f;
+		ps_solution.path_stream_vector[i].action_stream[0] = GESTALT_MOVE;
+
+		ps_solution.path_stream_vector[i].x_pos_stream[1] = 0.0f;
+		ps_solution.path_stream_vector[i].y_pos_stream[1] = 0.5f;
+		ps_solution.path_stream_vector[i].action_stream[1] = GESTALT_MOVE;
+
+		ps_solution.path_stream_vector[i].x_pos_stream[2] = 0.5f;
+		ps_solution.path_stream_vector[i].y_pos_stream[2] = 0.5f;
+		ps_solution.path_stream_vector[i].action_stream[2] = GESTALT_MOVE;
+
+		ps_solution.path_stream_vector[i].x_pos_stream[3] = 0.0f;
+		ps_solution.path_stream_vector[i].y_pos_stream[3] = 0.0f;
+		ps_solution.path_stream_vector[i].action_stream[3] = GESTALT_MOVE;
+	}
+
+}
+
 
 // Initialize the gestalt client
 // Must be called AFTER providing the deserialized solution via gestalt_deserialize_solution
 // Must be called BEFORE calling any other gestalt client functions
 // 
 // Provide the bot id
-void gestalt_init(uint8_t bot_id) {
-	curr_status.pos_error = 0.f;
-	curr_status.theta_error = 0.f;
-	curr_status.bot_id = bot_id;
+void gestalt_init(uint8_t bot_id) 
+{
+	gestalt_init_test_path(); // debug only
+
+	// find path assigned to this bot
+	// should probably search in the future
+	target_ps = ps_solution.path_stream_vector[bot_id-1];
+
+	// initialize current position/theta, ID, and progress
 	curr_status.curr_pos.x = target_ps.x_pos_stream[0];
 	curr_status.curr_pos.y = target_ps.y_pos_stream[0];
 	curr_status.curr_theta = 0.f;
-	curr_status.ps_progress = -1;
+	curr_status.bot_id = bot_id;
+	curr_status.ps_progress = 0;
+
+	// init goals
+	curr_goal.curr_x_goal = target_ps.x_pos_stream[1];
+	curr_goal.curr_y_goal = target_ps.y_pos_stream[1];
+	curr_goal.curr_action_goal = target_ps.action_stream[1];
+
+	float dist = get_2d_dist(curr_status.curr_pos.x, curr_status.curr_pos.y,
+		curr_goal.curr_x_goal, curr_goal.curr_y_goal);
+	curr_status.pos_error = dist;
+	curr_status.theta_error = 1.f;
+	
 }
 
 // Update the sensor data and all internal state space representations
-void gestalt_update_sensor_data(const Gestalt_sensor_data_t* sensor_data)
+void gestalt_update_sensor_data(KobukiSensors_t* kobuki_sensors)
 {
 
 }

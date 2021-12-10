@@ -1,6 +1,8 @@
 // cor-app
 #include "cor-app.h"
 
+#define GESTALT_BOT_ID 1
+
 // I2C manager
 NRF_TWI_MNGR_DEF(twi_mngr_instance, 5, 0);
 
@@ -52,6 +54,9 @@ int main(void) {
 	// initialize UART
 	// Do not init serial, not enough memory
 	//nrf_serial_init(&serial_uart, &m_uart0_drv_config, &serial_config);
+
+	// Initialize gestalt-client
+	gestalt_init(GESTALT_BOT_ID);
 
 	while (1) {
 		corapp_run();

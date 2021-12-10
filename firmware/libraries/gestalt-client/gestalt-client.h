@@ -66,7 +66,7 @@ void gestalt_deserialize_solution(uint8_t* solution_buffer, uint16_t solution_nu
 void gestalt_init(uint8_t bot_id);
 
 // Update the sensor data and all internal state space representations
-void gestalt_update_sensor_data(const Gestalt_sensor_data_t* sensor_data);
+void gestalt_update_sensor_data(KobukiSensors_t* kobuki_sensors);
 
 // Inform gestalt client that the active goal is complete
 void gestalt_send_goal_complete();
