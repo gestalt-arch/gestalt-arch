@@ -8,6 +8,9 @@ static Gestalt_path_stream_sol_t ps_solution;
 // determined after
 static Gestalt_path_stream_t target_ps;
 
+static Gestalt_status_t curr_status;
+
+
 
 static void deserialize_path_stream(uint8_t* path_stream, uint32_t path_length, uint8_t ps_idx) {
 	uint32_t r_ptr = 0;
@@ -79,5 +82,43 @@ void gestalt_deserialize_solution(uint8_t* solution_buffer, uint16_t solution_nu
 // 
 // Provide the bot id
 void gestalt_init(uint8_t bot_id) {
+	curr_status.pos_error = 0.f;
+	curr_status.theta_error = 0.f;
+	curr_status.bot_id = bot_id;
+	curr_status.curr_pos.x = target_ps.x_pos_stream[0];
+	curr_status.curr_pos.y = target_ps.y_pos_stream[0];
+	curr_status.curr_theta = 0.f;
+	curr_status.ps_progress = -1;
+}
 
+// Update the sensor data and all internal state space representations
+void gestalt_update_sensor_data(const Gestalt_sensor_data_t* sensor_data)
+{
+
+}
+
+// Inform gestalt client that the active goal is complete
+void gestalt_send_goal_complete()
+{
+
+}
+
+// Returns the current action
+Gestalt_action_t gestalt_get_current_action()
+{
+	return GESTALT_MOVE;
+}
+
+// Returns the current status struct with all information for FSM and connectivity
+Gestalt_status_t gestalt_get_current_status() 
+{
+	return curr_status;
+}
+
+// Returns the absolute position of the localization reference
+Gestalt_vector2_t gestalt_get_lcl_ref_pos()
+{
+	Gestalt_vector2_t pos;
+	pos.x = 0.f; pos.y = 0.f;
+	return pos;
 }

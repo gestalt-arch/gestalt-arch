@@ -2,7 +2,7 @@
 #include "kobukiSensorTypes.h"
 #include <stdint.h>
 
-#define MAX_SOLUTION_LENGTH 64
+#define MAX_SOLUTION_LENGTH 8
 #define MAX_BOTS 3
 
 typedef enum {
