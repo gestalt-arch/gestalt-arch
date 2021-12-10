@@ -27,12 +27,12 @@ inline static float get_2d_dist(float x1, float y1, float x2, float y2)
 
 inline static float get_2d_theta(float x1, float y1, float x2, float y2)
 {
-	return atan2f(y2 - y1, x2 - x1) * (180.f / M_PI);
+	return (90.f - (atan2f(y2 - y1, x2 - x1) * (180.f / M_PI)));
 }
 
 inline static float get_encoder_dist(uint16_t curr_encoder, uint16_t prev_encoder) 
 {
-	const float CONVERSION = 0.0006108f;
+	const float CONVERSION = 0.000085292090497737556558f;
 	float dist;
 	if(curr_encoder < prev_encoder)
 		dist = (0xFFFF - prev_encoder) + curr_encoder;
@@ -45,8 +45,8 @@ inline static void update_curr_pos(float dist, float theta)
 {
 	float theta_rad = theta * (M_PI / 180.f);
 	// tokyo drift
-	curr_status.curr_pos.x += dist * cosf(theta_rad);
-	curr_status.curr_pos.y += dist * sinf(theta_rad); 
+	curr_status.curr_pos.x += dist * sinf(theta_rad);
+	curr_status.curr_pos.y += dist * cosf(theta_rad); 
 }
 
 inline static void update_errors()
@@ -54,9 +54,9 @@ inline static void update_errors()
 	float dist = get_2d_dist(curr_status.curr_pos.x, curr_status.curr_pos.y,
 		curr_goal.curr_x_goal, curr_goal.curr_y_goal);
 	curr_status.pos_error = dist;
-	float theta = get_2d_theta(curr_status.curr_pos.x, curr_status.curr_pos.y,
+	float theta_target = get_2d_theta(0.f, 0.1f,
 		curr_goal.curr_x_goal, curr_goal.curr_y_goal);
-	curr_status.theta_error = theta;
+	curr_status.theta_error = theta_target - curr_status.curr_theta;
 }
 
 static void deserialize_path_stream(uint8_t* path_stream, uint32_t path_length, uint8_t ps_idx) 
@@ -169,7 +169,7 @@ void gestalt_init(uint8_t bot_id, KobukiSensors_t* kobuki_sensors)
 	curr_status.curr_pos.y = target_ps.y_pos_stream[0];
 	curr_status.curr_theta = 0.f;
 	curr_status.bot_id = bot_id;
-	curr_status.ps_progress = 0;
+	curr_status.ps_progress = -1;
 
 	// init goals
 	curr_goal.curr_x_goal = target_ps.x_pos_stream[1];
@@ -181,6 +181,7 @@ void gestalt_init(uint8_t bot_id, KobukiSensors_t* kobuki_sensors)
 	prev_encoder_right = kobuki_sensors->rightWheelEncoder;
 
 	update_errors();
+	gestalt_send_goal_complete();
 }
 
 // Update the sensor data and all internal state space representations
@@ -193,7 +194,8 @@ void gestalt_update_sensor_data(KobukiSensors_t* kobuki_sensors)
 	dist_diff = fabs(dist_left - dist_right);
 
 	// only increment distance if the wheels were traveling approximately straight
-	dist = (dist_diff <= STRAIGHT_DIST_THRESHOLD) ? (dist_left + dist_right) / 2 : 0.f;
+	dist = (dist_diff <= STRAIGHT_DIST_THRESHOLD) ? ((dist_left + dist_right) / 2) : 0.f;
+	dist = (dist > 1.f) ? 0.f : dist;
 
 	// debug
 	printf("Dist traveled: %1.4f\n", dist); 
@@ -202,10 +204,12 @@ void gestalt_update_sensor_data(KobukiSensors_t* kobuki_sensors)
 	prev_encoder_left = kobuki_sensors->leftWheelEncoder;
 	prev_encoder_right = kobuki_sensors->rightWheelEncoder;
 
-	printf("Angle: %d Angle rate: %d\n", (int32_t)kobuki_sensors->angle, (int32_t)kobuki_sensors->angleRate);
-
+	float angle_rate = ((float)(-1*kobuki_sensors->angleRate)) / 1000.f;
+	//printf("Angle: %d Angle rate: %1.4f\n", (int32_t)kobuki_sensors->angle, angle_rate);
+	
 	// attempt to integrate theta
-	float new_theta = curr_status.curr_theta + (kobuki_sensors->angleRate * 0.001f); 
+	float new_theta = curr_status.curr_theta + (angle_rate * 0.1f); 
+	new_theta = fmod(new_theta, 360.f);
 
 	update_curr_pos(dist, new_theta);
 	// update current theta
@@ -220,18 +224,16 @@ void gestalt_send_goal_complete()
 	// increment ps progress
 	if(curr_status.ps_progress != target_ps.path_length)
 		curr_status.ps_progress += 1;
+
+	
 	// update goals
 	uint8_t ps_prog = curr_status.ps_progress;
 	curr_goal.curr_x_goal = target_ps.x_pos_stream[ps_prog + 1];
 	curr_goal.curr_y_goal = target_ps.y_pos_stream[ps_prog + 1];
 	curr_goal.curr_action_goal = target_ps.action_stream[ps_prog + 1];
 
-	float dist = get_2d_dist(curr_status.curr_pos.x, curr_status.curr_pos.y,
-		curr_goal.curr_x_goal, curr_goal.curr_y_goal);
-	curr_status.pos_error = dist;
-	float theta = get_2d_theta(curr_status.curr_pos.x, curr_status.curr_pos.y,
-		curr_goal.curr_x_goal, curr_goal.curr_y_goal);
-	curr_status.theta_error = theta;
+	printf("Goal pos: %1.2f, %1.2f\n", curr_goal.curr_x_goal, curr_goal.curr_y_goal);
+	update_errors();
 }
 
 // Returns the current action
@@ -242,9 +244,9 @@ Gestalt_action_t gestalt_get_current_action()
 }
 
 // Returns the current status struct with all information for FSM and connectivity
-Gestalt_status_t gestalt_get_current_status() 
+Gestalt_status_t* gestalt_get_current_status() 
 {
-	return curr_status;
+	return &curr_status;
 }
 
 // Returns the absolute position of the localization reference

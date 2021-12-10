@@ -76,7 +76,7 @@ void gestalt_send_goal_complete();
 Gestalt_action_t gestalt_get_current_action();
 
 // Returns the current status struct with all information for FSM and connectivity
-Gestalt_status_t gestalt_get_current_status();
+Gestalt_status_t* gestalt_get_current_status();
 
 // Returns the absolute position of the localization reference
 Gestalt_vector2_t gestalt_get_lcl_ref_pos();
