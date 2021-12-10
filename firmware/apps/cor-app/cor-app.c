@@ -75,8 +75,8 @@ void corapp_run()
 			}
 			else {
 				display_write("DRIVE", DISPLAY_LINE_0);
-				sprintf(disp_buffer, "pos: %1.2f, %1.2f", 
-					status->curr_pos.x, status->curr_pos.y);
+				//sprintf(disp_buffer, "pos: %1.2f, %1.2f", 
+				//	status->curr_pos.x, status->curr_pos.y);
 				display_write(disp_buffer, DISPLAY_LINE_1);
 				kobukiDriveDirect(DRIVE_SPEED, DRIVE_SPEED);
 			}
@@ -89,7 +89,7 @@ void corapp_run()
 			//	ALIGN_CW
 			else {
 				display_write("ALIGN CW", DISPLAY_LINE_0);
-				sprintf(disp_buffer, "t: %1.2f, t_e %1.2f", status->curr_theta, cur_theta_error);
+				sprintf(disp_buffer, "%1.2f, %1.2f", status->curr_theta, cur_theta_error);
 				display_write(disp_buffer, DISPLAY_LINE_1);
 				kobukiDriveDirect(turn_speed, -turn_speed);
 			}

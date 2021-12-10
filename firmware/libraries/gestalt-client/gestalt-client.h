@@ -82,13 +82,13 @@ Gestalt_status_t* gestalt_get_current_status();
 Gestalt_vector2_t gestalt_get_lcl_ref_pos();
 
 // Initialize timer
-inline void gestalt_timer_init();
+void gestalt_timer_init();
 
 // Reset the timer back to 0
-inline void gestalt_timer_reset();
+void gestalt_timer_reset();
 
 // Get the current time passed since the last gestalt_timer_start
 // Returns the time in microseconds
-inline int32_t gestalt_timer_read();
+int32_t gestalt_timer_read();
 
 

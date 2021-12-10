@@ -19,6 +19,7 @@ static uint16_t prev_encoder_left;
 static uint16_t prev_encoder_right;
 
 #define STRAIGHT_DIST_THRESHOLD 0.05
+#define ANGLE_TICK_TO_DEG 0.00875
 
 inline static float get_2d_dist(float x1, float y1, float x2, float y2)
 {
@@ -54,7 +55,7 @@ inline static void update_errors()
 	float dist = get_2d_dist(curr_status.curr_pos.x, curr_status.curr_pos.y,
 		curr_goal.curr_x_goal, curr_goal.curr_y_goal);
 	curr_status.pos_error = dist;
-	float theta_target = get_2d_theta(0.f, 0.1f,
+	float theta_target = get_2d_theta(curr_status.curr_pos.x, curr_status.curr_pos.y,
 		curr_goal.curr_x_goal, curr_goal.curr_y_goal);
 	curr_status.theta_error = theta_target - curr_status.curr_theta;
 }
@@ -136,15 +137,15 @@ void gestalt_init_test_path()
 		ps_solution.path_stream_vector[i].action_stream[0] = GESTALT_MOVE;
 
 		ps_solution.path_stream_vector[i].x_pos_stream[1] = 0.0f;
-		ps_solution.path_stream_vector[i].y_pos_stream[1] = 0.5f;
+		ps_solution.path_stream_vector[i].y_pos_stream[1] = 2.0f;
 		ps_solution.path_stream_vector[i].action_stream[1] = GESTALT_MOVE;
 
-		ps_solution.path_stream_vector[i].x_pos_stream[2] = 0.5f;
-		ps_solution.path_stream_vector[i].y_pos_stream[2] = 0.5f;
+		ps_solution.path_stream_vector[i].x_pos_stream[2] = 0.0f;
+		ps_solution.path_stream_vector[i].y_pos_stream[2] = 0.0f;
 		ps_solution.path_stream_vector[i].action_stream[2] = GESTALT_MOVE;
 
 		ps_solution.path_stream_vector[i].x_pos_stream[3] = 0.0f;
-		ps_solution.path_stream_vector[i].y_pos_stream[3] = 0.0f;
+		ps_solution.path_stream_vector[i].y_pos_stream[3] = 0.5f;
 		ps_solution.path_stream_vector[i].action_stream[3] = GESTALT_MOVE;
 	}
 
@@ -204,10 +205,12 @@ void gestalt_update_sensor_data(KobukiSensors_t* kobuki_sensors)
 	prev_encoder_left = kobuki_sensors->leftWheelEncoder;
 	prev_encoder_right = kobuki_sensors->rightWheelEncoder;
 
-	float angle_rate = ((float)(-1*kobuki_sensors->angleRate)) / 1000.f;
+	float angle_rate = ((float)(-1*kobuki_sensors->angleRate) * 0.00875f);
 	
 	// Get cycle time passed (this function must be called once per main() while interation)
 	float delta_t = ((float)gestalt_timer_read() / 1000000.f);
+	printf("Time passed: %1.5f\n", delta_t);
+	
 	// attempt to integrate theta
 	float new_theta = curr_status.curr_theta + (angle_rate * delta_t);
 	gestalt_timer_reset(); 
@@ -260,7 +263,7 @@ Gestalt_vector2_t gestalt_get_lcl_ref_pos()
 }
 
 // Initialize timer
-inline void gestalt_timer_init()
+void gestalt_timer_init()
 {
 	// 6.2.2
 	NRF_TIMER4->BITMODE |= 0x3;
@@ -268,7 +271,7 @@ inline void gestalt_timer_init()
 }
 
 // Reset the timer back to 0
-inline void gestalt_timer_reset()
+void gestalt_timer_reset()
 {
 	NRF_TIMER4->TASKS_CLEAR |= 0x1;
   	NRF_TIMER4->TASKS_START |= 0x1;
@@ -276,8 +279,8 @@ inline void gestalt_timer_reset()
 
 // Get the current time passed since the last gestalt_timer_start
 // Returns the time in microseconds
-inline int32_t gestalt_timer_read()
+int32_t gestalt_timer_read()
 {
 	NRF_TIMER4->TASKS_CAPTURE[1] = 1;
-	return (uint32_t) NRF_TIMER4->CC[1];
+	return (uint32_t)NRF_TIMER4->CC[1];
 }
