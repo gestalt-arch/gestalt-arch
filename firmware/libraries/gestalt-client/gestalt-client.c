@@ -158,6 +158,8 @@ void gestalt_init_test_path()
 // Provide the bot id
 void gestalt_init(uint8_t bot_id, KobukiSensors_t* kobuki_sensors) 
 {
+	gestalt_timer_init();
+
 	gestalt_init_test_path(); // debug only
 
 	// find path assigned to this bot
@@ -182,6 +184,7 @@ void gestalt_init(uint8_t bot_id, KobukiSensors_t* kobuki_sensors)
 
 	update_errors();
 	gestalt_send_goal_complete();
+	gestalt_timer_reset();
 }
 
 // Update the sensor data and all internal state space representations
@@ -197,18 +200,17 @@ void gestalt_update_sensor_data(KobukiSensors_t* kobuki_sensors)
 	dist = (dist_diff <= STRAIGHT_DIST_THRESHOLD) ? ((dist_left + dist_right) / 2) : 0.f;
 	dist = (dist > 1.f) ? 0.f : dist;
 
-	// debug
-	printf("Dist traveled: %1.4f\n", dist); 
-
 	// save current encoder values
 	prev_encoder_left = kobuki_sensors->leftWheelEncoder;
 	prev_encoder_right = kobuki_sensors->rightWheelEncoder;
 
 	float angle_rate = ((float)(-1*kobuki_sensors->angleRate)) / 1000.f;
-	//printf("Angle: %d Angle rate: %1.4f\n", (int32_t)kobuki_sensors->angle, angle_rate);
 	
+	// Get cycle time passed (this function must be called once per main() while interation)
+	float delta_t = ((float)gestalt_timer_read() / 1000000.f);
 	// attempt to integrate theta
-	float new_theta = curr_status.curr_theta + (angle_rate * 0.1f); 
+	float new_theta = curr_status.curr_theta + (angle_rate * delta_t);
+	gestalt_timer_reset(); 
 	new_theta = fmod(new_theta, 360.f);
 
 	update_curr_pos(dist, new_theta);
@@ -255,4 +257,27 @@ Gestalt_vector2_t gestalt_get_lcl_ref_pos()
 	Gestalt_vector2_t pos;
 	pos.x = 0.f; pos.y = 0.f;
 	return pos;
+}
+
+// Initialize timer
+inline void gestalt_timer_init()
+{
+	// 6.2.2
+	NRF_TIMER4->BITMODE |= 0x3;
+	NRF_TIMER4->PRESCALER |= 0x4;
+}
+
+// Reset the timer back to 0
+inline void gestalt_timer_reset()
+{
+	NRF_TIMER4->TASKS_CLEAR |= 0x1;
+  	NRF_TIMER4->TASKS_START |= 0x1;
+}
+
+// Get the current time passed since the last gestalt_timer_start
+// Returns the time in microseconds
+inline int32_t gestalt_timer_read()
+{
+	NRF_TIMER4->TASKS_CAPTURE[1] = 1;
+	return (uint32_t) NRF_TIMER4->CC[1];
 }
