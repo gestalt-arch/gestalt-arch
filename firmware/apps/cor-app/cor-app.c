@@ -14,6 +14,13 @@ static Gestalt_status_t* status;
 static float cur_pos_error;
 static float cur_theta_error;
 static Gestalt_action_t action;
+// LCD display buffer
+char disp_buffer[32];
+
+// BLE send & receive buffers
+uint8_t ble_rx_buffer[32];
+uint8_t ble_tx_buffer[32];
+#define BLE_BUFF_SIZE 14
 
 static int8_t turn_speed = TURN_SPEED;
 
@@ -95,12 +102,18 @@ void corapp_run()
 {
 	// read sensors from robot
 	kobukiSensorPoll(&sensors);
+	
+	// update gestalt-client
 	gestalt_update_sensor_data(&sensors);
+
+	// read back the status from gestalt
 	status = gestalt_get_current_status();
 	cur_pos_error = status->pos_error;
     cur_theta_error = status->theta_error;
 
-	char disp_buffer[32];
+	// update BLE advertise buffer
+	gestalt_prep_ble_buffer(ble_tx_buffer); // should be full of zeros
+	simple_ble_adv_manuf_data(ble_tx_buffer, BLE_BUFF_SIZE);
 
 	printf("curr_theta = %1.3f | cur_theta_error: %1.3f\n", status->curr_theta, cur_theta_error);
     action = gestalt_get_current_action();
