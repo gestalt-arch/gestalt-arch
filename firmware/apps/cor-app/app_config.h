@@ -1,6 +1,5 @@
 // application-specific configuration
 // augments the base configuration in sdk/<SDK>/config/<IC>/config/sdk_config.h
-
 #pragma once
 
 #define SIMPLE_BLE_ENABLED 1
@@ -29,12 +28,12 @@
 #define SAADC_ENABLED 1
 #define SAADC_CONFIG_LP_MODE 1
 
-// #define NRFX_SPIM_ENABLED 1
-// #define NRFX_SPIM1_ENABLED 1
-// #define NRFX_SPI_ENABLED 1
-// #define NRFX_SPI1_ENABLED 1
-// #define SPI_ENABLED 1
-// #define SPI1_ENABLED 1
+#define NRFX_SPIM_ENABLED 1
+#define NRFX_SPIM1_ENABLED 1
+#define NRFX_SPI_ENABLED 1
+#define NRFX_SPI1_ENABLED 1
+#define SPI_ENABLED 1
+#define SPI1_ENABLED 1
 
 #define APP_SDCARD_ENABLED 1
 
@@ -128,4 +127,3 @@
 // #define TWIS0_ENABLED 1
 // #define NRFX_TWIS_ENABLED 1
 // #define NRFX_TWIS1_ENABLED 1
-
