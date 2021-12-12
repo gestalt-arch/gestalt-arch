@@ -14,6 +14,11 @@ static Gestalt_status_t curr_status;
 // Contains the goal position and action of the bot
 static Gestalt_goal_t curr_goal;
 
+// Keep track of other bots
+// Updated by BLE communication
+static Gestalt_bot_status_t bot_a;
+static Gestalt_bot_status_t bot_b;
+
 // Keep history of encoder values
 static uint16_t prev_encoder_left;
 static uint16_t prev_encoder_right;
@@ -21,7 +26,7 @@ static uint16_t prev_encoder_right;
 #define STRAIGHT_DIST_THRESHOLD 0.05
 #define ANGLE_TICK_TO_DEG 0.00875
 #define BOT_WHEEL_RADIUS 35.f   // bot wheel radius (in mm)
-#define BOT_WHEEL_BASE 0.230f      // bot wheel base (in m)
+#define BOT_WHEEL_BASE 0.230f   // bot wheel base (in m)
 
 inline static float get_2d_dist(float x1, float y1, float x2, float y2)
 {
@@ -304,4 +309,36 @@ int32_t gestalt_timer_read()
 {
 	NRF_TIMER4->TASKS_CAPTURE[1] = 1;
 	return (uint32_t)NRF_TIMER4->CC[1];
+}
+
+void gestalt_prep_ble_buffer(uint8_t* buffer)
+{
+	buffer[0] = target_ps.bot_id;
+	int32_t x = (int32_t)(curr_status.curr_pos.x * 10000.f);
+	int32_t y = (int32_t)(curr_status.curr_pos.y * 10000.f);
+	int32_t t = (int32_t)(curr_status.curr_theta * 10000.f);
+
+	// x-pos
+	buffer[1] = (uint8_t)(x >> 24);
+	buffer[2] = (uint8_t)(x >> 16);
+	buffer[3] = (uint8_t)(x >> 8);
+	buffer[4] = (uint8_t)(x);
+
+	// y-pos
+	buffer[5] = (uint8_t)(y >> 24);
+	buffer[6] = (uint8_t)(y >> 16);
+	buffer[7] = (uint8_t)(y >> 8);
+	buffer[8] = (uint8_t)(y);
+
+	// theta
+	buffer[9] = (uint8_t)(t >> 24);
+	buffer[10] = (uint8_t)(t >> 16);
+	buffer[11] = (uint8_t)(t >> 8);
+	buffer[12] = (uint8_t)(t);
+
+	// used to send localization pole positions
+	// but this has been removed from the packet definition
+
+	// path stream progress
+	buffer[13] = curr_status.ps_progress;
 }

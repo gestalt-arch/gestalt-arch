@@ -43,6 +43,14 @@ typedef struct {
 } Gestalt_sensor_data_t;
 
 typedef struct {
+    uint8_t bot_id;
+    float x;
+    float y;
+    float theta;
+    int8_t ps_progress;
+} Gestalt_bot_status_t;
+
+typedef struct {
     uint8_t path_length;
     uint8_t bot_id;
     float x_pos_stream[MAX_SOLUTION_LENGTH];
@@ -91,4 +99,7 @@ void gestalt_timer_reset();
 // Returns the time in microseconds
 int32_t gestalt_timer_read();
 
+// Fill the BLE buffer with all info according to the
+// BLE broadcast packet definition
+void gestalt_prep_ble_buffer(uint8_t* buffer);
 

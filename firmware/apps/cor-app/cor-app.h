@@ -14,6 +14,7 @@
 #include "nrf_pwr_mgmt.h"
 #include "nrf_serial.h"
 #include "nrf_twi_mngr.h"
+#include "simple_ble.h"
 
 #include "buckler.h"
 #include "display.h"
@@ -25,6 +26,10 @@
 #include "lsm9ds1.h"
 
 #include "gestalt-client.h"
+
+#define GESTALT_BOT_ID 1
+#define BOT_BLE_ID 0xF0C1 // Set LSB = GESTALT_BOT_ID
+#define BOT_BLE_NAME "GS 1" // Set name to "GS [BOT_ID]"
 
 typedef enum {
   STOP,

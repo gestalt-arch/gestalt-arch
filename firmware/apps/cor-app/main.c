@@ -1,8 +1,6 @@
 // cor-app
 #include "cor-app.h"
 
-#define GESTALT_BOT_ID 1
-
 int main(void) {
 
 	// initialize Kobuki library

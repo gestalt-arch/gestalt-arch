@@ -17,6 +17,19 @@ static Gestalt_action_t action;
 
 static int8_t turn_speed = TURN_SPEED;
 
+// Intervals for advertising and connections
+static simple_ble_config_t ble_config = {
+        // c0:98:e5:49:xx:xx
+        .platform_id       = 0x49,    // used as 4th octect in device BLE address
+        .device_id         = BOT_BLE_ID, // TODO: replace with your lab bench number
+        .adv_name          = BOT_BLE_NAME, // used in advertisements if there is room
+        .adv_interval      = MSEC_TO_UNITS(100, UNIT_0_625_MS),
+        .min_conn_interval = MSEC_TO_UNITS(100, UNIT_1_25_MS),
+        .max_conn_interval = MSEC_TO_UNITS(200, UNIT_1_25_MS),
+};
+
+simple_ble_app_t* simple_ble_app;
+
 
 #define I2C_DEVICE_ID 0x66
 
@@ -67,6 +80,9 @@ void corapp_init()
 	i2c_config.frequency = NRF_TWIM_FREQ_400K;
 	ret_code_t error_code = nrf_twi_mngr_init(&twi_mngr_instance, &i2c_config);
 	APP_ERROR_CHECK(error_code);
+
+	// Init BLE
+	simple_ble_app = simple_ble_init(&ble_config);
 
 	nrf_delay_ms(2000);
 
