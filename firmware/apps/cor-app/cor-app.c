@@ -17,6 +17,87 @@ static Gestalt_action_t action;
 
 static int8_t turn_speed = TURN_SPEED;
 
+
+#define I2C_DEVICE_ID 0x66
+
+// I2C manager
+NRF_TWI_MNGR_DEF(twi_mngr_instance, 5, 0);
+
+static void i2c_read_bytes(uint8_t i2c_addr, uint8_t reg_addr, uint8_t* data, uint8_t len) {
+  nrf_twi_mngr_transfer_t const read_transfer[] = {
+    NRF_TWI_MNGR_WRITE(i2c_addr, &reg_addr, 1, NRF_TWI_MNGR_NO_STOP),
+    NRF_TWI_MNGR_READ(i2c_addr, data, len, 0),
+  };
+  ret_code_t error_code = nrf_twi_mngr_perform(&twi_mngr_instance, NULL, read_transfer, 2, NULL);
+  APP_ERROR_CHECK(error_code);
+}
+
+static uint8_t i2c_reg_read(uint8_t i2c_addr, uint8_t reg_addr) {
+  uint8_t rx_buf = 0;
+  nrf_twi_mngr_transfer_t const read_transfer[] = {
+    NRF_TWI_MNGR_WRITE(i2c_addr, &reg_addr, 1, NRF_TWI_MNGR_NO_STOP),
+    NRF_TWI_MNGR_READ(i2c_addr, &rx_buf, 1, 0),
+  };
+  ret_code_t error_code = nrf_twi_mngr_perform(&twi_mngr_instance, NULL, read_transfer, 2, NULL);
+  APP_ERROR_CHECK(error_code);
+  return rx_buf;
+}
+
+static void i2c_reg_write(uint8_t i2c_addr, uint8_t reg_addr, uint8_t data) {
+  uint8_t buf[2] = {reg_addr, data};
+  nrf_twi_mngr_transfer_t const write_transfer[] = {
+    NRF_TWI_MNGR_WRITE(i2c_addr, buf, 2, 0),
+  };
+  ret_code_t error_code = nrf_twi_mngr_perform(&twi_mngr_instance, NULL, write_transfer, 1, NULL);
+  APP_ERROR_CHECK(error_code);
+}
+
+
+void corapp_init()
+{
+	
+	// initialize RTT library
+	NRF_LOG_INIT(NULL);
+	NRF_LOG_DEFAULT_BACKENDS_INIT();
+	printf("Initialized RTT!\n");
+
+	// initialize i2c master (two wire interface)
+	nrf_drv_twi_config_t i2c_config = NRF_DRV_TWI_DEFAULT_CONFIG;
+	i2c_config.scl = BUCKLER_SENSORS_SCL;
+	i2c_config.sda = BUCKLER_SENSORS_SDA;
+	i2c_config.frequency = NRF_TWIM_FREQ_400K;
+	ret_code_t error_code = nrf_twi_mngr_init(&twi_mngr_instance, &i2c_config);
+	APP_ERROR_CHECK(error_code);
+
+	// initialize display
+	nrf_drv_spi_t spi_instance = NRF_DRV_SPI_INSTANCE(1);
+	nrf_drv_spi_config_t spi_config = {
+	  .sck_pin = BUCKLER_LCD_SCLK,
+	  .mosi_pin = BUCKLER_LCD_MOSI,
+	  .miso_pin = BUCKLER_LCD_MISO,
+	  .ss_pin = BUCKLER_LCD_CS,
+	  .irq_priority = NRFX_SPI_DEFAULT_CONFIG_IRQ_PRIORITY,
+	  .orc = 0,
+	  .frequency = NRF_DRV_SPI_FREQ_4M,
+	  .mode = NRF_DRV_SPI_MODE_2,
+	  .bit_order = NRF_DRV_SPI_BIT_ORDER_MSB_FIRST
+	};
+	error_code = nrf_drv_spi_init(&spi_instance, &spi_config, NULL, NULL);
+	APP_ERROR_CHECK(error_code);
+	display_init(&spi_instance);
+
+	display_write("Hello, Human!", DISPLAY_LINE_0);
+	printf("Display initialized!\n");
+
+	nrf_delay_ms(2000);
+
+	// initialize LSM9DS1 driver
+	lsm9ds1_init(&twi_mngr_instance);
+	printf("lsm9ds1 initialized\n");
+
+
+}
+
 void corapp_run()
 {
 	// read sensors from robot
