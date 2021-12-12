@@ -86,7 +86,7 @@ void corapp_init()
 	APP_ERROR_CHECK(error_code);
 	display_init(&spi_instance);
 
-	display_write("Hello, Human!", DISPLAY_LINE_0);
+	display_write("DISPLAY INIT", DISPLAY_LINE_0);
 	printf("Display initialized!\n");
 
 	nrf_delay_ms(2000);
@@ -94,8 +94,6 @@ void corapp_init()
 	// initialize LSM9DS1 driver
 	lsm9ds1_init(&twi_mngr_instance);
 	printf("lsm9ds1 initialized\n");
-
-
 }
 
 void corapp_run()
@@ -103,7 +101,7 @@ void corapp_run()
 	// read sensors from robot
 	kobukiSensorPoll(&sensors);
 	gestalt_update_sensor_data(&sensors);
-
+	display_write("ALIGN CCW", DISPLAY_LINE_0);
 	status = gestalt_get_current_status();
 	cur_pos_error = status->pos_error;
     cur_theta_error = status->theta_error;

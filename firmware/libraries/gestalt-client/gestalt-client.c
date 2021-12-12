@@ -20,6 +20,8 @@ static uint16_t prev_encoder_right;
 
 #define STRAIGHT_DIST_THRESHOLD 0.05
 #define ANGLE_TICK_TO_DEG 0.00875
+#define BOT_WHEEL_RADIUS 35.f   // bot wheel radius (in mm)
+#define BOT_WHEEL_BASE 230      // bot wheel base (in mm)
 
 inline static float get_2d_dist(float x1, float y1, float x2, float y2)
 {
@@ -40,6 +42,19 @@ inline static float get_encoder_dist(uint16_t curr_encoder, uint16_t prev_encode
 	else
 		dist = curr_encoder - prev_encoder;
 	return dist * CONVERSION;
+}
+
+// Provide distance traveled by each wheel (calculated using get_encoder_dist)
+// returns calculated theta as 360 * (wheel dist / wheel turning circumference)
+// returns 0 if both wheels moving in same direction
+inline static float get_encoder_rotation(float left_dist, float right_dist)
+{
+	if(left_dist > 0 && right_dist < 0)
+		return 360.f*(((fabs(right_dist) + left_dist) / 2.f) / (BOT_WHEEL_BASE * M_PI));
+	else if(left_dist < 0 && right_dist > 0)
+		return -1*(360.f*(((right_dist + fabs(left_dist)) / 2.f) / (BOT_WHEEL_BASE * M_PI)));
+	else
+		return 0.f;
 }
 
 inline static void update_curr_pos(float dist, float theta) 
@@ -197,6 +212,8 @@ void gestalt_update_sensor_data(KobukiSensors_t* kobuki_sensors)
 	float dist_diff, dist;
 	dist_diff = fabs(dist_left - dist_right);
 
+	float encoder_theta = get_encoder_rotation(dist_left, dist_right);
+
 	// only increment distance if the wheels were traveling approximately straight
 	dist = (dist_diff <= STRAIGHT_DIST_THRESHOLD) ? ((dist_left + dist_right) / 2) : 0.f;
 	dist = (dist > 1.f) ? 0.f : dist;
@@ -206,20 +223,20 @@ void gestalt_update_sensor_data(KobukiSensors_t* kobuki_sensors)
 	prev_encoder_right = kobuki_sensors->rightWheelEncoder;
 
 	float angle_rate = ((float)(-1*kobuki_sensors->angleRate) * 0.00875f);
-	
 	// Get cycle time passed (this function must be called once per main() while interation)
 	float delta_t = ((float)gestalt_timer_read() / 1000000.f);
-	printf("Time passed: %1.5f\n", delta_t);
+	//printf("Time passed: %1.5f\n", delta_t);
 	
 	// attempt to integrate theta
-	float new_theta = curr_status.curr_theta + (angle_rate * delta_t);
+	float gyro_theta = (angle_rate * delta_t);
 	gestalt_timer_reset(); 
-	new_theta = fmod(new_theta, 360.f);
+	gyro_theta = fmod(gyro_theta, 360.f);
 
-	update_curr_pos(dist, new_theta);
 	// update current theta
-	curr_status.curr_theta = new_theta;
+	curr_status.curr_theta += gyro_theta;
+	curr_status.curr_theta = fmod(curr_status.curr_theta, 360.f);
 
+	update_curr_pos(dist, curr_status.curr_theta);
 	update_errors();
 }
 
