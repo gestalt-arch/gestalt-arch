@@ -103,3 +103,6 @@ int32_t gestalt_timer_read();
 // BLE broadcast packet definition
 void gestalt_prep_ble_buffer(uint8_t* buffer);
 
+// Parse the BLE buffer and populate corresponding records of other bot status
+// Adheres to the BLE broadcast packet definition
+void gestalt_parse_ble_buffer(uint8_t* buffer);

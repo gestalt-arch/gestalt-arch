@@ -16,8 +16,7 @@ static Gestalt_goal_t curr_goal;
 
 // Keep track of other bots
 // Updated by BLE communication
-static Gestalt_bot_status_t bot_a;
-static Gestalt_bot_status_t bot_b;
+static Gestalt_bot_status_t bot_status_list[MAX_BOTS];
 
 // Keep history of encoder values
 static uint16_t prev_encoder_left;
@@ -201,6 +200,16 @@ void gestalt_init(uint8_t bot_id, KobukiSensors_t* kobuki_sensors)
 	prev_encoder_left = kobuki_sensors->leftWheelEncoder;
 	prev_encoder_right = kobuki_sensors->rightWheelEncoder;
 
+	// init bot status list
+	for(int i = 0; i < MAX_BOTS; i++)
+	{
+		bot_status_list[i].x = 0.f;
+		bot_status_list[i].y = 0.f;
+		bot_status_list[i].theta = 0.f;
+		bot_status_list[i].ps_progress = -1;
+		bot_status_list[i].bot_id = i;
+	}
+
 	update_errors();
 	gestalt_send_goal_complete();
 	gestalt_timer_reset();
@@ -311,6 +320,8 @@ int32_t gestalt_timer_read()
 	return (uint32_t)NRF_TIMER4->CC[1];
 }
 
+// Fill the BLE buffer with all info according to the
+// BLE broadcast packet definition
 void gestalt_prep_ble_buffer(uint8_t* buffer)
 {
 	buffer[0] = target_ps.bot_id;
@@ -341,4 +352,33 @@ void gestalt_prep_ble_buffer(uint8_t* buffer)
 
 	// path stream progress
 	buffer[13] = curr_status.ps_progress;
+}
+
+// Parse the BLE buffer and populate corresponding records of other bot status
+// Adheres to the BLE broadcast packet definition
+void gestalt_parse_ble_buffer(uint8_t* buffer) 
+{
+	float tmp_f;
+	int32_t tmp_i;
+	uint8_t o_id = buffer[0];
+	bot_status_list[o_id].bot_id = o_id;
+
+	// x-pos
+	tmp_i = ( buffer[1] << 24 | buffer[2] << 16 | buffer[3] << 8 | buffer[4] );
+	tmp_f = ((float)tmp_i) / 10000.f;
+	bot_status_list[o_id].x = tmp_f;
+
+	// y-pos
+	tmp_i = ( buffer[5] << 24 | buffer[6] << 16 | buffer[7] << 8 | buffer[8] );
+	tmp_f = ((float)tmp_i) / 10000.f;
+	bot_status_list[o_id].y = tmp_f;
+
+	// theta
+	tmp_i = ( buffer[9] << 24 | buffer[10] << 16 | buffer[11] << 8 | buffer[12] );
+	tmp_f = ((float)tmp_i) / 10000.f;
+	bot_status_list[o_id].theta = tmp_f;
+
+	// path stream progress
+	bot_status_list[o_id].ps_progress = buffer[13];
+	
 }
