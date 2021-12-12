@@ -9,6 +9,8 @@
 
 #include "buckler.h"
 
+
+
 NRF_SERIAL_DRV_UART_CONFIG_DEF(m_uart0_drv_config,
                                BUCKLER_UART_RX, BUCKLER_UART_TX,
                                0, 0,
