@@ -300,24 +300,23 @@ Gestalt_vector2_t gestalt_get_lcl_ref_pos()
 // Initialize timer
 void gestalt_timer_init()
 {
-	// 6.2.2
-	NRF_TIMER4->BITMODE |= 0x3;
-	NRF_TIMER4->PRESCALER |= 0x4;
+	NRF_TIMER3->BITMODE |= 0x3;
+	NRF_TIMER3->PRESCALER |= 0x4;
 }
 
 // Reset the timer back to 0
 void gestalt_timer_reset()
 {
-	NRF_TIMER4->TASKS_CLEAR |= 0x1;
-  	NRF_TIMER4->TASKS_START |= 0x1;
+	NRF_TIMER3->TASKS_CLEAR |= 0x1;
+  	NRF_TIMER3->TASKS_START |= 0x1;
 }
 
 // Get the current time passed since the last gestalt_timer_start
 // Returns the time in microseconds
 int32_t gestalt_timer_read()
 {
-	NRF_TIMER4->TASKS_CAPTURE[1] = 1;
-	return (uint32_t)NRF_TIMER4->CC[1];
+	NRF_TIMER3->TASKS_CAPTURE[1] = 1;
+	return (uint32_t)NRF_TIMER3->CC[1];
 }
 
 // Fill the BLE buffer with all info according to the
