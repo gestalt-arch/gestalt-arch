@@ -91,6 +91,9 @@ void corapp_init()
 	// Init BLE
 	simple_ble_app = simple_ble_init(&ble_config);
 
+	// Init virtual timer library
+	virtual_timer_init();
+
 	nrf_delay_ms(2000);
 
 	// initialize LSM9DS1 driver
@@ -102,7 +105,7 @@ void corapp_run()
 {
 	// read sensors from robot
 	kobukiSensorPoll(&sensors);
-	
+
 	// update gestalt-client
 	gestalt_update_sensor_data(&sensors);
 

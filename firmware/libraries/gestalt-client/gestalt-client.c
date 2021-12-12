@@ -157,8 +157,8 @@ void gestalt_init_test_path()
 		ps_solution.path_stream_vector[i].y_pos_stream[1] = 0.5f;
 		ps_solution.path_stream_vector[i].action_stream[1] = GESTALT_MOVE;
 
-		ps_solution.path_stream_vector[i].x_pos_stream[2] = 1.0f;
-		ps_solution.path_stream_vector[i].y_pos_stream[2] = 1.0f;
+		ps_solution.path_stream_vector[i].x_pos_stream[2] = 0.5f;
+		ps_solution.path_stream_vector[i].y_pos_stream[2] = -0.5f;
 		ps_solution.path_stream_vector[i].action_stream[2] = GESTALT_MOVE;
 
 		ps_solution.path_stream_vector[i].x_pos_stream[3] = 0.0f;

@@ -27,6 +27,8 @@
 
 #include "gestalt-client.h"
 
+#include "virtual_timer.h"
+
 #define GESTALT_BOT_ID 1
 #define BOT_BLE_ID 0xF0C1 // Set LSB = GESTALT_BOT_ID
 #define BOT_BLE_NAME "GS 1" // Set name to "GS [BOT_ID]"
