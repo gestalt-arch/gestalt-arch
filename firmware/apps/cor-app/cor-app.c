@@ -55,7 +55,6 @@ static void i2c_reg_write(uint8_t i2c_addr, uint8_t reg_addr, uint8_t data) {
 
 void corapp_init()
 {
-	
 	// initialize RTT library
 	NRF_LOG_INIT(NULL);
 	NRF_LOG_DEFAULT_BACKENDS_INIT();
@@ -69,26 +68,6 @@ void corapp_init()
 	ret_code_t error_code = nrf_twi_mngr_init(&twi_mngr_instance, &i2c_config);
 	APP_ERROR_CHECK(error_code);
 
-	// initialize display
-	nrf_drv_spi_t spi_instance = NRF_DRV_SPI_INSTANCE(1);
-	nrf_drv_spi_config_t spi_config = {
-	  .sck_pin = BUCKLER_LCD_SCLK,
-	  .mosi_pin = BUCKLER_LCD_MOSI,
-	  .miso_pin = BUCKLER_LCD_MISO,
-	  .ss_pin = BUCKLER_LCD_CS,
-	  .irq_priority = NRFX_SPI_DEFAULT_CONFIG_IRQ_PRIORITY,
-	  .orc = 0,
-	  .frequency = NRF_DRV_SPI_FREQ_4M,
-	  .mode = NRF_DRV_SPI_MODE_2,
-	  .bit_order = NRF_DRV_SPI_BIT_ORDER_MSB_FIRST
-	};
-	error_code = nrf_drv_spi_init(&spi_instance, &spi_config, NULL, NULL);
-	APP_ERROR_CHECK(error_code);
-	display_init(&spi_instance);
-
-	display_write("DISPLAY INIT", DISPLAY_LINE_0);
-	printf("Display initialized!\n");
-
 	nrf_delay_ms(2000);
 
 	// initialize LSM9DS1 driver
@@ -101,7 +80,6 @@ void corapp_run()
 	// read sensors from robot
 	kobukiSensorPoll(&sensors);
 	gestalt_update_sensor_data(&sensors);
-	display_write("ALIGN CCW", DISPLAY_LINE_0);
 	status = gestalt_get_current_status();
 	cur_pos_error = status->pos_error;
     cur_theta_error = status->theta_error;
