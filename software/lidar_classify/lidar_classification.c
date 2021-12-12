@@ -68,13 +68,13 @@ float get_width(float theta1, float theta2, float distance1, float distance2) {
 }
 
 void get_loc(struct coordinate* cord, float pole1_theta, float pole1_distance, float pole2_theta, float pole2_distance) {
-	float a1 = -1 / tanf(pole1_theta * DEG_TO_RAD);
-	float b1 = 1;
-	float c1 = (POLE_1_Y) - (1 / tanf(pole1_theta * DEG_TO_RAD)) * (POLE_1_X);
+	float a1 = 1 / tanf(pole1_theta * DEG_TO_RAD);
+	float b1 = -1;
+	float c1 = -(POLE_1_Y) + (1 / tanf(pole1_theta * DEG_TO_RAD)) * (POLE_1_X);
 
-	float a2 = -1 / tanf(pole2_theta * DEG_TO_RAD);
-	float b2 = 1;
-	float c2 = (POLE_2_Y) - (1 / tanf(pole2_theta * DEG_TO_RAD)) * (POLE_2_X);
+	float a2 = 1 / tanf(pole2_theta * DEG_TO_RAD);
+	float b2 = -1;
+	float c2 = -(POLE_2_Y) + (1 / tanf(pole2_theta * DEG_TO_RAD)) * (POLE_2_X);
 
 	float x = (b2 * c1 - b1 * c2) / (a1 * b2 - a2 * b1);
 	float y = (a1 * c2 - a2 * c1) / (a1 * b2 - a2 * b1);
