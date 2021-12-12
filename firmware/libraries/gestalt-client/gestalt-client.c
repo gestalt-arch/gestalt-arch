@@ -21,7 +21,7 @@ static uint16_t prev_encoder_right;
 #define STRAIGHT_DIST_THRESHOLD 0.05
 #define ANGLE_TICK_TO_DEG 0.00875
 #define BOT_WHEEL_RADIUS 35.f   // bot wheel radius (in mm)
-#define BOT_WHEEL_BASE 230      // bot wheel base (in mm)
+#define BOT_WHEEL_BASE 0.230f      // bot wheel base (in m)
 
 inline static float get_2d_dist(float x1, float y1, float x2, float y2)
 {
@@ -37,24 +37,22 @@ inline static float get_encoder_dist(uint16_t curr_encoder, uint16_t prev_encode
 {
 	const float CONVERSION = 0.000085292090497737556558f;
 	float dist;
-	if(curr_encoder < prev_encoder)
-		dist = (0xFFFF - prev_encoder) + curr_encoder;
-	else
-		dist = curr_encoder - prev_encoder;
+	dist = curr_encoder - prev_encoder;
 	return dist * CONVERSION;
 }
 
 // Provide distance traveled by each wheel (calculated using get_encoder_dist)
 // returns calculated theta as 360 * (wheel dist / wheel turning circumference)
 // returns 0 if both wheels moving in same direction
-inline static float get_encoder_rotation(float left_dist, float right_dist)
+static float get_encoder_rotation(float left_dist, float right_dist)
 {
 	if(left_dist > 0 && right_dist < 0)
 		return 360.f*(((fabs(right_dist) + left_dist) / 2.f) / (BOT_WHEEL_BASE * M_PI));
 	else if(left_dist < 0 && right_dist > 0)
 		return -1*(360.f*(((right_dist + fabs(left_dist)) / 2.f) / (BOT_WHEEL_BASE * M_PI)));
-	else
-		return 0.f;
+	else {
+		return 360.f*(((left_dist - right_dist) / (BOT_WHEEL_BASE * M_PI)));
+	}
 }
 
 inline static void update_curr_pos(float dist, float theta) 
@@ -151,16 +149,16 @@ void gestalt_init_test_path()
 		ps_solution.path_stream_vector[i].y_pos_stream[0] = 0.0f;
 		ps_solution.path_stream_vector[i].action_stream[0] = GESTALT_MOVE;
 
-		ps_solution.path_stream_vector[i].x_pos_stream[1] = 0.0f;
-		ps_solution.path_stream_vector[i].y_pos_stream[1] = 2.0f;
+		ps_solution.path_stream_vector[i].x_pos_stream[1] = -0.5f;
+		ps_solution.path_stream_vector[i].y_pos_stream[1] = 0.5f;
 		ps_solution.path_stream_vector[i].action_stream[1] = GESTALT_MOVE;
 
-		ps_solution.path_stream_vector[i].x_pos_stream[2] = 0.0f;
-		ps_solution.path_stream_vector[i].y_pos_stream[2] = 0.0f;
+		ps_solution.path_stream_vector[i].x_pos_stream[2] = 1.0f;
+		ps_solution.path_stream_vector[i].y_pos_stream[2] = 1.0f;
 		ps_solution.path_stream_vector[i].action_stream[2] = GESTALT_MOVE;
 
 		ps_solution.path_stream_vector[i].x_pos_stream[3] = 0.0f;
-		ps_solution.path_stream_vector[i].y_pos_stream[3] = 0.5f;
+		ps_solution.path_stream_vector[i].y_pos_stream[3] = 0.0f;
 		ps_solution.path_stream_vector[i].action_stream[3] = GESTALT_MOVE;
 	}
 
@@ -216,6 +214,7 @@ void gestalt_update_sensor_data(KobukiSensors_t* kobuki_sensors)
 
 	// only increment distance if the wheels were traveling approximately straight
 	dist = (dist_diff <= STRAIGHT_DIST_THRESHOLD) ? ((dist_left + dist_right) / 2) : 0.f;
+	// Filter unreasonable distances
 	dist = (dist > 1.f) ? 0.f : dist;
 
 	// save current encoder values
@@ -228,16 +227,21 @@ void gestalt_update_sensor_data(KobukiSensors_t* kobuki_sensors)
 	//printf("Time passed: %1.5f\n", delta_t);
 	
 	// attempt to integrate theta
-	float gyro_theta = (angle_rate * delta_t);
-	gestalt_timer_reset(); 
-	gyro_theta = fmod(gyro_theta, 360.f);
+	float gyro_theta = (angle_rate * delta_t); 
+
+	float theta = (fabs(encoder_theta) > 1.f) ? gyro_theta : encoder_theta;
 
 	// update current theta
-	curr_status.curr_theta += gyro_theta;
+	curr_status.curr_theta += encoder_theta;
 	curr_status.curr_theta = fmod(curr_status.curr_theta, 360.f);
 
 	update_curr_pos(dist, curr_status.curr_theta);
+
+	printf("left dist: %1.4f\tright dist: %1.4f\n", dist_left, dist_right);
+	printf("enc theta: %1.4f\tgyro theta: %1.4f\n", encoder_theta, gyro_theta);
+
 	update_errors();
+	gestalt_timer_reset();
 }
 
 // Inform gestalt client that the active goal is complete

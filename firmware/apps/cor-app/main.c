@@ -7,6 +7,7 @@ int main(void) {
 
 	// initialize Kobuki library
 	kobukiInit();
+	kobukiDriveDirect(0,0);
 
 	// initialize display
 	nrf_drv_spi_t spi_instance = NRF_DRV_SPI_INSTANCE(1);

@@ -132,10 +132,10 @@ void corapp_run()
 			}
 			else {
 				display_write("DRIVE", DISPLAY_LINE_0);
-				//sprintf(disp_buffer, "pos: %1.2f, %1.2f", 
-				//	status->curr_pos.x, status->curr_pos.y);
-				display_write(disp_buffer, DISPLAY_LINE_1);
 				kobukiDriveDirect(DRIVE_SPEED, DRIVE_SPEED);
+				sprintf(disp_buffer, "pos: %1.2f, %1.2f", 
+					status->curr_pos.x, status->curr_pos.y);
+				display_write(disp_buffer, DISPLAY_LINE_1);
 			}
 			break;
 		case ALIGN_CW:
@@ -146,9 +146,9 @@ void corapp_run()
 			//	ALIGN_CW
 			else {
 				display_write("ALIGN CW", DISPLAY_LINE_0);
+				kobukiDriveDirect(turn_speed, -turn_speed);
 				sprintf(disp_buffer, "%1.2f, %1.2f", status->curr_theta, cur_theta_error);
 				display_write(disp_buffer, DISPLAY_LINE_1);
-				kobukiDriveDirect(turn_speed, -turn_speed);
 			}
 			break;
 		case ALIGN_CCW:
@@ -159,11 +159,11 @@ void corapp_run()
 			// ALIGN_CCW to ALIGN_CCW
 			else {
 				display_write("ALIGN CCW", DISPLAY_LINE_0);
-				sprintf(disp_buffer, "t: %1.2f, t_e %1.2f", status->curr_theta, cur_theta_error);
-				display_write(disp_buffer, DISPLAY_LINE_1);
 				kobukiDriveDirect(-turn_speed, turn_speed);
+				sprintf(disp_buffer, "%1.2f, %1.2f", status->curr_theta, cur_theta_error);
+				display_write(disp_buffer, DISPLAY_LINE_1);
 			}
 			break;
 	}
-	// continue for 10 ms before checking state again
+	// continue for 1 ms before checking state again
 }
