@@ -232,7 +232,7 @@ void gestalt_update_sensor_data(KobukiSensors_t* kobuki_sensors)
 	float theta = (fabs(encoder_theta) > 1.f) ? gyro_theta : encoder_theta;
 
 	// update current theta
-	curr_status.curr_theta += encoder_theta;
+	curr_status.curr_theta += theta;
 	curr_status.curr_theta = fmod(curr_status.curr_theta, 360.f);
 
 	update_curr_pos(dist, curr_status.curr_theta);
