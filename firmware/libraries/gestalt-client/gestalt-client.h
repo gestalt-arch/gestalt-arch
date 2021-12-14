@@ -105,4 +105,8 @@ void gestalt_prep_ble_buffer(uint8_t* buffer);
 
 // Parse the BLE buffer and populate corresponding records of other bot status
 // Adheres to the BLE broadcast packet definition
-void gestalt_parse_ble_buffer(uint8_t* buffer);
+void gestalt_parse_ble_buffer(uint8_t* buffer, uint8_t len);
+
+// Get pointer to the status of other bots
+Gestalt_bot_status_t* gestalt_get_status_list(void);
+

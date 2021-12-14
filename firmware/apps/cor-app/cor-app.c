@@ -26,6 +26,7 @@ uint8_t ble_tx_buffer[32];
 static int8_t ble_comm_state = 0;
 static uint32_t ble_timer_handle;
 static int8_t ble_state_change = 0;
+static int8_t ble_rx_pending = 0;
 
 #define BLE_COMM_INT_L 200000  // lower bound comm interval (us)
 #define BLE_COMM_INT_H 1000000 // upper bound comm interval (us)
@@ -100,10 +101,9 @@ void ble_evt_adv_report(ble_evt_t const* p_ble_evt)
 		adv_report->peer_addr.addr[4] == 0x98 &&
 		adv_report->peer_addr.addr[5] == 0xC0 )
 		{
-			//printf("Gestalt report size: %x\n", adv_report->data.len);
-			gestalt_parse_ble_buffer(adv_report->data.p_data);
+			memcpy(ble_rx_buffer, adv_report->data.p_data, adv_report->data.len);
+			ble_rx_pending = 1;
 		}
-		
 }
 
 // ble_timer_handle virtual timer callback function
@@ -194,8 +194,21 @@ void corapp_run()
 
 	if(ble_comm_state == 0) {
 		// transition to scan state
+		gestalt_prep_ble_buffer(ble_tx_buffer);
+		//for(int i = 0; i < 14; i++ )
+		//	printf("TX Byte [%d]: %x\n", i, ble_tx_buffer[i]);
 		simple_ble_adv_manuf_data(ble_tx_buffer, BLE_BUFF_SIZE);
 	}
+
+	if(ble_rx_pending == 1) {
+		gestalt_parse_ble_buffer(ble_rx_buffer, 31);
+		ble_rx_pending = 0;
+	}
+
+	Gestalt_bot_status_t* b_list = gestalt_get_status_list();
+	printf("pos (o): %1.2f, %1.2f", 
+		b_list[3].x, b_list[3].y);
+	//display_write(disp_buffer, DISPLAY_LINE_0);
 
 	//printf("curr_theta = %1.3f | cur_theta_error: %1.3f\n", status->curr_theta, cur_theta_error);
     action = gestalt_get_current_action();
@@ -219,7 +232,7 @@ void corapp_run()
 			}
 			//	STOP
 			else {
-				display_write("STOP", DISPLAY_LINE_0);
+				//display_write("STOP", DISPLAY_LINE_0);
 				kobukiDriveDirect(0, 0);
 				gestalt_send_goal_complete();
 			}
@@ -242,7 +255,7 @@ void corapp_run()
 				kobukiDriveDirect(0, 0);
 			}
 			else {
-				display_write("DRIVE", DISPLAY_LINE_0);
+				//display_write("DRIVE", DISPLAY_LINE_0);
 				kobukiDriveDirect(DRIVE_SPEED, DRIVE_SPEED);
 				sprintf(disp_buffer, "pos: %1.2f, %1.2f", 
 					status->curr_pos.x, status->curr_pos.y);
@@ -256,7 +269,7 @@ void corapp_run()
 			}
 			//	ALIGN_CW
 			else {
-				display_write("ALIGN CW", DISPLAY_LINE_0);
+				//display_write("ALIGN CW", DISPLAY_LINE_0);
 				kobukiDriveDirect(turn_speed, -turn_speed);
 				sprintf(disp_buffer, "%1.2f, %1.2f", status->curr_theta, cur_theta_error);
 				display_write(disp_buffer, DISPLAY_LINE_1);
@@ -269,7 +282,7 @@ void corapp_run()
 			}
 			// ALIGN_CCW to ALIGN_CCW
 			else {
-				display_write("ALIGN CCW", DISPLAY_LINE_0);
+				//display_write("ALIGN CCW", DISPLAY_LINE_0);
 				kobukiDriveDirect(-turn_speed, turn_speed);
 				sprintf(disp_buffer, "%1.2f, %1.2f", status->curr_theta, cur_theta_error);
 				display_write(disp_buffer, DISPLAY_LINE_1);

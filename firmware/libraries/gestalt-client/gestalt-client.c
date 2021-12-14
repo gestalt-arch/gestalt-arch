@@ -16,7 +16,7 @@ static Gestalt_goal_t curr_goal;
 
 // Keep track of other bots
 // Updated by BLE communication
-static Gestalt_bot_status_t bot_status_list[MAX_BOTS];
+static Gestalt_bot_status_t bot_status_list[MAX_BOTS+1];
 
 // Keep history of encoder values
 static uint16_t prev_encoder_left;
@@ -370,6 +370,7 @@ void gestalt_prep_ble_buffer(uint8_t* buffer)
 	int32_t t = (int32_t)(curr_status.curr_theta * 10000.f);
 
 	// x-pos
+	printf("X-POS TX: %d\n", x);
 	buffer[1] = (uint8_t)(x >> 24);
 	buffer[2] = (uint8_t)(x >> 16);
 	buffer[3] = (uint8_t)(x >> 8);
@@ -392,36 +393,44 @@ void gestalt_prep_ble_buffer(uint8_t* buffer)
 
 	// path stream progress
 	buffer[13] = curr_status.ps_progress;
+	
 }
 
 // Parse the BLE buffer and populate corresponding records of other bot status
 // Adheres to the BLE broadcast packet definition
-void gestalt_parse_ble_buffer(uint8_t* buffer) 
+void gestalt_parse_ble_buffer(uint8_t* buffer, uint8_t len) 
 {
 	float tmp_f;
 	int32_t tmp_i;
-	uint8_t o_id = buffer[0];
+	uint8_t o_id = buffer[7];
 	bot_status_list[o_id].bot_id = o_id;
 
 	// x-pos
-	tmp_i = ( buffer[1] << 24 | buffer[2] << 16 | buffer[3] << 8 | buffer[4] );
-	tmp_f = ((float)tmp_i) / 10000.f;
+	tmp_i = ( (int32_t)buffer[8] << 24 | (int32_t)buffer[9] << 16 | (int32_t)buffer[10] << 8 | (int32_t)buffer[11] );
+	tmp_f = (float)tmp_i;
+	tmp_f = tmp_f / 10000.f;
 	bot_status_list[o_id].x = tmp_f;
 
 	// y-pos
-	tmp_i = ( buffer[5] << 24 | buffer[6] << 16 | buffer[7] << 8 | buffer[8] );
+	tmp_i = ( (int32_t)buffer[12] << 24 | (int32_t)buffer[13] << 16 | (int32_t)buffer[14] << 8 | (int32_t)buffer[15] );
 	tmp_f = ((float)tmp_i) / 10000.f;
 	bot_status_list[o_id].y = tmp_f;
 
 	// theta
-	tmp_i = ( buffer[9] << 24 | buffer[10] << 16 | buffer[11] << 8 | buffer[12] );
+	tmp_i = ( (int32_t)buffer[16] << 24 | (int32_t)buffer[17] << 16 | (int32_t)buffer[18] << 8 | (int32_t)buffer[19] );
 	tmp_f = ((float)tmp_i) / 10000.f;
 	bot_status_list[o_id].theta = tmp_f;
 
 	// path stream progress
-	bot_status_list[o_id].ps_progress = buffer[13];
+	bot_status_list[o_id].ps_progress = buffer[20];
 
 	//printf("%d %1.2f %1.2f\n", bot_status_list[o_id].bot_id, bot_status_list[o_id].x, bot_status_list[o_id].y);
 	//	bot_status_list[o_id].theta);
 	
+}
+
+// Get pointer to the status of other bots
+Gestalt_bot_status_t* gestalt_get_status_list(void)
+{
+	return bot_status_list;
 }
