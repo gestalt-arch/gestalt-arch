@@ -56,12 +56,8 @@ uint32_t read_timer(void)
 // Initialize TIMER4 as a free running timer
 void virtual_timer_init(void)
 {
-	// Place your timer initialization code here
-
-	// 6.2.2
 	NRF_TIMER4->BITMODE |= 0x3;
 	NRF_TIMER4->PRESCALER |= 0x4;
-	//  NRF_TIMER4->INTENSET |= (1<<17);
 	NRF_TIMER4->INTENSET |= (1 << 16);
 	NVIC_EnableIRQ(TIMER4_IRQn);
 

@@ -251,8 +251,8 @@ void gestalt_update_sensor_data(KobukiSensors_t* kobuki_sensors)
 
 	update_curr_pos(dist, curr_status.curr_theta);
 
-	printf("left dist: %1.4f\tright dist: %1.4f\n", dist_left, dist_right);
-	printf("enc theta: %1.4f\tgyro theta: %1.4f\n", encoder_theta, gyro_theta);
+	//printf("left dist: %1.4f\tright dist: %1.4f\n", dist_left, dist_right);
+	//printf("enc theta: %1.4f\tgyro theta: %1.4f\n", encoder_theta, gyro_theta);
 
 	update_errors();
 	gestalt_timer_reset();
@@ -272,7 +272,7 @@ void gestalt_send_goal_complete()
 	curr_goal.curr_y_goal = target_ps.y_pos_stream[ps_prog + 1];
 	curr_goal.curr_action_goal = target_ps.action_stream[ps_prog + 1];
 
-	printf("Goal pos: %1.2f, %1.2f\n", curr_goal.curr_x_goal, curr_goal.curr_y_goal);
+	//printf("Goal pos: %1.2f, %1.2f\n", curr_goal.curr_x_goal, curr_goal.curr_y_goal);
 	update_errors();
 }
 

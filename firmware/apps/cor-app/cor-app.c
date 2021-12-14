@@ -91,6 +91,10 @@ static inline uint32_t get_random_comm_interval(uint32_t l_bound, uint32_t u_bou
 void ble_evt_adv_report(ble_evt_t const* p_ble_evt)
 {
 	ble_gap_evt_adv_report_t const* adv_report = &(p_ble_evt->evt.gap_evt.params.adv_report);
+	//c0:98:e5:49:xx:xx
+	printf("\n\nReport received: %d %d\n", adv_report->peer_addr.addr[5], adv_report->peer_addr.addr[4]);
+	if(adv_report->peer_addr.addr[5] == 0xC0)
+		printf("FILTERED Report received: %x\n", adv_report->peer_addr.addr);
 }
 
 // ble_timer_handle virtual timer callback function
@@ -99,16 +103,6 @@ void ble_switch_state()
 {
 	printf("*BLE state switch*\n");
 	ble_comm_state = (ble_comm_state == 1) ? 0 : 1;
-
-	if(ble_comm_state == 1) {
-		// transition to scan state
-		advertising_stop();
-		scanning_start();
-	}
-	else {
-		scanning_stop();
-		advertising_start();
-	}
 
 	// refresh comm interval timer
 	uint32_t ble_comm_interval = get_random_comm_interval(BLE_COMM_INT_L, BLE_COMM_INT_H);
@@ -141,6 +135,9 @@ void corapp_init()
 	// start switch timer
 	uint32_t ble_comm_interval = get_random_comm_interval(BLE_COMM_INT_L, BLE_COMM_INT_H);
 	ble_timer_handle = virtual_timer_start(ble_comm_interval, &ble_switch_state);
+	for(int i = 0; i < BLE_BUFF_SIZE; i++)
+		ble_tx_buffer[i] = 0;
+	simple_ble_adv_manuf_data(ble_tx_buffer, BLE_BUFF_SIZE);
 
 	// initialize LSM9DS1 driver
 	lsm9ds1_init(&twi_mngr_instance);
@@ -162,13 +159,17 @@ void corapp_run()
 
 	// update BLE advertise buffer
 	// ONLY if in advertise comm state
-	if(ble_comm_state == 0) {
-		gestalt_prep_ble_buffer(ble_tx_buffer); // should be full of zeros
+	if(ble_comm_state == 1) {
+		// transition to scan state
+		advertising_stop();
+		scanning_start();
+	}
+	else {
+		scanning_stop();
 		simple_ble_adv_manuf_data(ble_tx_buffer, BLE_BUFF_SIZE);
 	}
-	
 
-	printf("curr_theta = %1.3f | cur_theta_error: %1.3f\n", status->curr_theta, cur_theta_error);
+	//printf("curr_theta = %1.3f | cur_theta_error: %1.3f\n", status->curr_theta, cur_theta_error);
     action = gestalt_get_current_action();
 
 	// test current state
@@ -176,12 +177,12 @@ void corapp_run()
 		case STOP:
 			//	STOP to ALIGN_CW
 			if (action == GESTALT_MOVE && cur_theta_error < -FLT_EPSILON) {
-				state = ALIGN_CCW;
+				//state = ALIGN_CCW;
 				turn_speed = TURN_SPEED;
 			}
 			// STOP to ALIGN_CCW
 			else if (action == GESTALT_MOVE && cur_theta_error > FLT_EPSILON) {
-				state = ALIGN_CW;
+				//state = ALIGN_CW;
 				turn_speed = TURN_SPEED;
 			}
 			// STOP to DRIVE
