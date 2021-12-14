@@ -50,9 +50,8 @@ static void ser_event_handler(nrf_serial_t const *p_serial, nrf_serial_event_t e
         case NRF_SERIAL_EVENT_RX_DATA:
         {
             size_t read;
-            uint8_t buffer[522];
-            nrf_serial_read(&serial_uart, &buffer, sizeof(buffer), &read, 0);
-            ser_rx_data(buffer, read);
+            nrf_serial_read(&serial_uart, &lidar_buffer, sizeof(lidar_buffer), &read, 0);
+            ser_rx_data(lidar_buffer, read);
             break;
         }
         case NRF_SERIAL_EVENT_DRV_ERR:
@@ -72,7 +71,6 @@ static void ser_event_handler(nrf_serial_t const *p_serial, nrf_serial_event_t e
 void ser_rx_data(uint8_t *data, size_t size) {
     // Do something useful with recieved data
     printf("%.*s", size, data);
-    memcpy(lidar_buffer, data, size);
 }
 
 int main(void) {
