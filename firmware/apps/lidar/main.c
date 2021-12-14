@@ -1,5 +1,5 @@
-//#include "../../buckler-ext/software/libraries/ydlidar_x2/ydlidar_x2.h"
-//#include "lidar_classification.h"
+#include "../../buckler-ext/software/libraries/ydlidar_x2/ydlidar_x2.h"
+#include "lidar_classification.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -12,6 +12,9 @@
 
 #include "buckler.h"
 
+uint8_t buffer[522];
+uint8_t STATE = 0;
+
 NRF_SERIAL_DRV_UART_CONFIG_DEF(m_uart0_drv_config,
                                BUCKLER_UART_RX, BUCKLER_UART_TX,
                                0, 0,
@@ -19,13 +22,13 @@ NRF_SERIAL_DRV_UART_CONFIG_DEF(m_uart0_drv_config,
                                NRF_UART_BAUDRATE_115200,
                                UART_DEFAULT_CONFIG_IRQ_PRIORITY);
 
-#define SERIAL_FIFO_TX_SIZE 512
-#define SERIAL_FIFO_RX_SIZE 512
+#define SERIAL_FIFO_TX_SIZE 0
+#define SERIAL_FIFO_RX_SIZE 522
 
 NRF_SERIAL_QUEUES_DEF(serial_queue, SERIAL_FIFO_TX_SIZE, SERIAL_FIFO_RX_SIZE);
 
-#define SERIAL_BUFF_TX_SIZE 128
-#define SERIAL_BUFF_RX_SIZE 128
+#define SERIAL_BUFF_TX_SIZE 0
+#define SERIAL_BUFF_RX_SIZE 255
 
 NRF_SERIAL_BUFFERS_DEF(serial_buffs, SERIAL_BUFF_TX_SIZE, SERIAL_BUFF_RX_SIZE);
 
@@ -47,9 +50,14 @@ static void ser_event_handler(nrf_serial_t const *p_serial, nrf_serial_event_t e
         case NRF_SERIAL_EVENT_RX_DATA:
         {
             size_t read;
-            uint8_t buffer[16];
-            nrf_serial_read(&serial_uart, &buffer, sizeof(buffer), &read, 0);
-            ser_rx_data(buffer, read);
+            if (STATE == 0) {
+                nrf_serial_read(&serial_uart, &buffer, sizeof(buffer), &read, 0);
+            }
+            else {
+                nrf_serial_read(&serial_uart, &(buffer + 255), sizeof(buffer), &read, 0);
+            }
+            
+            //ser_rx_data(read);
             break;
         }
         case NRF_SERIAL_EVENT_DRV_ERR:
@@ -66,9 +74,11 @@ static void ser_event_handler(nrf_serial_t const *p_serial, nrf_serial_event_t e
     }
 }
 
-void ser_rx_data(uint8_t *data, size_t size) {
+void ser_rx_data(size_t size) {
     // Do something useful with recieved data
-    printf("%.*s", size, data);
+    for (int i = 0; i < size; i++) {
+        printf("%x", buffer[i]);
+    }   
 }
 
 int main(void) {
