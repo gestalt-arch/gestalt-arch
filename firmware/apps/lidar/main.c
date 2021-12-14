@@ -56,7 +56,7 @@ static void ser_event_handler(nrf_serial_t const *p_serial, nrf_serial_event_t e
                 nrf_serial_read(&serial_uart, buffer, sizeof(buffer), &read, 0);
                 STATE = 1;
             }
-            else {
+            else { 
                 nrf_serial_read(&serial_uart, (buffer + 255), sizeof(buffer), &read, 0);
                 STATE = 0;
             }
@@ -86,11 +86,11 @@ void ser_rx_data(size_t size) {
     get_lidar_data(buffer, &lidar_data);
     printf("Distances ");
     for (int i = 0; i < 429; i++) {
-        printf("%f", lidar_data.distance[i]);
+        printf("%f ", lidar_data.distance[i]);
     }
     printf("\nTheta ");
     for (int i = 0; i < 429; i++) {
-        printf("%f", lidar_data.theta[i]);
+        printf("%f ", lidar_data.theta[i]);
     }
     __enable_irq();
 
