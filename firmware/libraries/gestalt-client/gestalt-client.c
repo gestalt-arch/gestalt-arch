@@ -1,5 +1,5 @@
 #include "gestalt-client.h"
-
+#include "nrf.h"
 
 // The complete path stream solution
 static Gestalt_path_stream_sol_t ps_solution;
