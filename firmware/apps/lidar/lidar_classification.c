@@ -177,7 +177,7 @@ classification_t classify(float* distance, float* theta, uint8_t num_objects) {
 
 	return LC_SUCCESS;
 }
-
+/*
 int main(int argc, char **argv) {
 	uint16_t MAX_SIZE = ceil(3000 / 7);
 
@@ -194,3 +194,4 @@ int main(int argc, char **argv) {
 	printf("FAILURE");
 	return 0;
 }
+*/
