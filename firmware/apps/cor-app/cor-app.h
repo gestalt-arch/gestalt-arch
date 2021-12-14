@@ -14,6 +14,7 @@
 #include "nrf_pwr_mgmt.h"
 #include "nrf_serial.h"
 #include "nrf_twi_mngr.h"
+#include "simple_ble.h"
 
 #include "buckler.h"
 #include "display.h"
@@ -26,6 +27,12 @@
 
 #include "gestalt-client.h"
 
+#include "virtual_timer.h"
+
+#define GESTALT_BOT_ID 1
+#define BOT_BLE_ID 0xF0C1 // Set LSB = GESTALT_BOT_ID
+#define BOT_BLE_NAME "GS 1" // Set name to "GS [BOT_ID]"
+
 typedef enum {
   STOP,
   DRIVE,
@@ -33,9 +40,8 @@ typedef enum {
   ALIGN_CCW
 } KobukiState_t;
 
-void ser_event_handler(nrf_serial_t const* p_serial, nrf_serial_event_t event);
-void ser_rx_data(uint8_t* data, size_t size);
 
+void corapp_init();
 
 void corapp_run();
 

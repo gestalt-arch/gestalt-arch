@@ -1,6 +1,7 @@
 #include "ydlidar_x2.h"
 #include "kobukiSensorTypes.h"
 #include <stdint.h>
+#include <math.h>
 
 #define MAX_SOLUTION_LENGTH 8
 #define MAX_BOTS 3
@@ -42,6 +43,14 @@ typedef struct {
 } Gestalt_sensor_data_t;
 
 typedef struct {
+    uint8_t bot_id;
+    float x;
+    float y;
+    float theta;
+    int8_t ps_progress;
+} Gestalt_bot_status_t;
+
+typedef struct {
     uint8_t path_length;
     uint8_t bot_id;
     float x_pos_stream[MAX_SOLUTION_LENGTH];
@@ -63,7 +72,7 @@ void gestalt_deserialize_solution(uint8_t* solution_buffer, uint16_t solution_nu
 // Must be called BEFORE calling any other gestalt client functions
 // 
 // Provide the bot id
-void gestalt_init(uint8_t bot_id);
+void gestalt_init(uint8_t bot_id, KobukiSensors_t* kobuki_sensors);
 
 // Update the sensor data and all internal state space representations
 void gestalt_update_sensor_data(KobukiSensors_t* kobuki_sensors);
@@ -75,7 +84,25 @@ void gestalt_send_goal_complete();
 Gestalt_action_t gestalt_get_current_action();
 
 // Returns the current status struct with all information for FSM and connectivity
-Gestalt_status_t gestalt_get_current_status();
+Gestalt_status_t* gestalt_get_current_status();
 
 // Returns the absolute position of the localization reference
 Gestalt_vector2_t gestalt_get_lcl_ref_pos();
+
+// Initialize timer
+void gestalt_timer_init();
+
+// Reset the timer back to 0
+void gestalt_timer_reset();
+
+// Get the current time passed since the last gestalt_timer_start
+// Returns the time in microseconds
+int32_t gestalt_timer_read();
+
+// Fill the BLE buffer with all info according to the
+// BLE broadcast packet definition
+void gestalt_prep_ble_buffer(uint8_t* buffer);
+
+// Parse the BLE buffer and populate corresponding records of other bot status
+// Adheres to the BLE broadcast packet definition
+void gestalt_parse_ble_buffer(uint8_t* buffer);
