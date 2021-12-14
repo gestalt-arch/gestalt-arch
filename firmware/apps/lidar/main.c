@@ -13,6 +13,7 @@
 #include "buckler.h"
 
 uint8_t lidar_buffer[522];
+YdLidarData_t lidar_data;
 
 NRF_SERIAL_DRV_UART_CONFIG_DEF(m_uart0_drv_config,
                                BUCKLER_UART_RX, BUCKLER_UART_TX,
@@ -81,7 +82,7 @@ int main(void) {
 
     while (1) {
         nrf_delay_ms(1000);
-        YdLidarData_t* lidar = get_lidar_data(lidar_buffer);
+        YdLidarData_t* lidar = get_lidar_data(lidar_buffer, &lidar_data);
 
 
         printf("Distances: ");
