@@ -1,4 +1,4 @@
-#include "lidar_classification.h"
+/*#include "lidar_classification.h"
 #include <inttypes.h>
 #include <math.h>
 #include <stdio.h>
@@ -22,9 +22,6 @@
 #define POLE_2_X -8.56922
 #define POLE_2_Y -10.64436
 
-/*
-	REMOVE. For testing purposes.
-*/
 void parse(char *file, float* distance, float* theta, uint8_t* num_objects) {
 	FILE* data = fopen(file, "r");
 	char temp_word[4096];
@@ -47,9 +44,6 @@ void parse(char *file, float* distance, float* theta, uint8_t* num_objects) {
 	}
 }
 
-/*
-	REMOVE. For testing purposes.
-*/
 void print(float* distance, float* theta, uint8_t num_objects) {
 	printf("Data of the file.\n");
 	printf("%u\n", num_objects);
@@ -177,7 +171,7 @@ classification_t classify(float* distance, float* theta, uint8_t num_objects) {
 
 	return LC_SUCCESS;
 }
-/*
+
 int main(int argc, char **argv) {
 	uint16_t MAX_SIZE = ceil(3000 / 7);
 

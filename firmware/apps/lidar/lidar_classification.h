@@ -1,3 +1,4 @@
+/*
 #include <inttypes.h>
 typedef enum classification_t {
 	LC_SUCCESS,
@@ -14,3 +15,5 @@ typedef struct coordinate {
 	float x;
 	float y;
 } coordinate;
+
+/*
