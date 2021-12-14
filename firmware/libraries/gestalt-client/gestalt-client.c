@@ -145,26 +145,66 @@ void gestalt_deserialize_solution(uint8_t* solution_buffer, uint16_t solution_nu
 void gestalt_init_test_path() 
 {
 	ps_solution.num_path_streams = 3;
-	for (int i = 0; i < ps_solution.num_path_streams; i++) {
-		ps_solution.path_stream_vector[i].bot_id = i + 1;
-		ps_solution.path_stream_vector[i].path_length = 4;
-		
-		ps_solution.path_stream_vector[i].x_pos_stream[0] = 0.0f;
-		ps_solution.path_stream_vector[i].y_pos_stream[0] = 0.0f;
-		ps_solution.path_stream_vector[i].action_stream[0] = GESTALT_MOVE;
 
-		ps_solution.path_stream_vector[i].x_pos_stream[1] = -0.5f;
-		ps_solution.path_stream_vector[i].y_pos_stream[1] = 0.5f;
-		ps_solution.path_stream_vector[i].action_stream[1] = GESTALT_MOVE;
+	// BOT 1
+	ps_solution.path_stream_vector[0].bot_id = 1;
+	ps_solution.path_stream_vector[0].path_length = 4;
+	
+	ps_solution.path_stream_vector[0].x_pos_stream[0] = 0.0f;
+	ps_solution.path_stream_vector[0].y_pos_stream[0] = 0.0f;
+	ps_solution.path_stream_vector[0].action_stream[0] = GESTALT_MOVE;
 
-		ps_solution.path_stream_vector[i].x_pos_stream[2] = 0.5f;
-		ps_solution.path_stream_vector[i].y_pos_stream[2] = -0.5f;
-		ps_solution.path_stream_vector[i].action_stream[2] = GESTALT_MOVE;
+	ps_solution.path_stream_vector[0].x_pos_stream[1] = -0.25f;
+	ps_solution.path_stream_vector[0].y_pos_stream[1] = 0.25f;
+	ps_solution.path_stream_vector[0].action_stream[1] = GESTALT_MOVE;
 
-		ps_solution.path_stream_vector[i].x_pos_stream[3] = 0.0f;
-		ps_solution.path_stream_vector[i].y_pos_stream[3] = 0.0f;
-		ps_solution.path_stream_vector[i].action_stream[3] = GESTALT_MOVE;
-	}
+	ps_solution.path_stream_vector[0].x_pos_stream[2] = 0.1f;
+	ps_solution.path_stream_vector[0].y_pos_stream[2] = -0.1f;
+	ps_solution.path_stream_vector[0].action_stream[2] = GESTALT_MOVE;
+
+	ps_solution.path_stream_vector[0].x_pos_stream[3] = 0.0f;
+	ps_solution.path_stream_vector[0].y_pos_stream[3] = 0.0f;
+	ps_solution.path_stream_vector[0].action_stream[3] = GESTALT_MOVE;
+
+	// BOT 2
+	ps_solution.path_stream_vector[1].bot_id = 2;
+	ps_solution.path_stream_vector[1].path_length = 4;
+
+	ps_solution.path_stream_vector[1].x_pos_stream[0] = 0.0f;
+	ps_solution.path_stream_vector[1].y_pos_stream[0] = 0.0f;
+	ps_solution.path_stream_vector[1].action_stream[0] = GESTALT_MOVE;
+
+	ps_solution.path_stream_vector[1].x_pos_stream[1] = -0.5f;
+	ps_solution.path_stream_vector[1].y_pos_stream[1] = 0.5f;
+	ps_solution.path_stream_vector[1].action_stream[1] = GESTALT_MOVE;
+
+	ps_solution.path_stream_vector[1].x_pos_stream[2] = 0.5f;
+	ps_solution.path_stream_vector[1].y_pos_stream[2] = -0.5f;
+	ps_solution.path_stream_vector[1].action_stream[2] = GESTALT_MOVE;
+
+	ps_solution.path_stream_vector[1].x_pos_stream[3] = 0.0f;
+	ps_solution.path_stream_vector[1].y_pos_stream[3] = 0.0f;
+	ps_solution.path_stream_vector[1].action_stream[3] = GESTALT_MOVE;
+
+	// BOT 3
+	ps_solution.path_stream_vector[2].bot_id = 3;
+	ps_solution.path_stream_vector[2].path_length = 4;
+	
+	ps_solution.path_stream_vector[2].x_pos_stream[0] = 0.0f;
+	ps_solution.path_stream_vector[2].y_pos_stream[0] = 0.0f;
+	ps_solution.path_stream_vector[2].action_stream[0] = GESTALT_MOVE;
+
+	ps_solution.path_stream_vector[2].x_pos_stream[1] = -0.5f;
+	ps_solution.path_stream_vector[2].y_pos_stream[1] = 0.5f;
+	ps_solution.path_stream_vector[2].action_stream[1] = GESTALT_MOVE;
+
+	ps_solution.path_stream_vector[2].x_pos_stream[2] = 0.5f;
+	ps_solution.path_stream_vector[2].y_pos_stream[2] = -0.5f;
+	ps_solution.path_stream_vector[2].action_stream[2] = GESTALT_MOVE;
+
+	ps_solution.path_stream_vector[2].x_pos_stream[3] = 0.0f;
+	ps_solution.path_stream_vector[2].y_pos_stream[3] = 0.0f;
+	ps_solution.path_stream_vector[2].action_stream[3] = GESTALT_MOVE;
 
 }
 
@@ -183,6 +223,7 @@ void gestalt_init(uint8_t bot_id, KobukiSensors_t* kobuki_sensors)
 	// find path assigned to this bot
 	// should probably search in the future
 	target_ps = ps_solution.path_stream_vector[bot_id-1];
+	printf("My BOT ID: %d", target_ps.bot_id);
 
 	// initialize current position/theta, ID, and progress
 	curr_status.curr_pos.x = target_ps.x_pos_stream[0];
@@ -252,7 +293,7 @@ void gestalt_update_sensor_data(KobukiSensors_t* kobuki_sensors)
 	update_curr_pos(dist, curr_status.curr_theta);
 
 	//printf("left dist: %1.4f\tright dist: %1.4f\n", dist_left, dist_right);
-	printf("enc theta: %1.4f\tgyro theta: %1.4f\n", encoder_theta, gyro_theta);
+	//printf("enc theta: %1.4f\tgyro theta: %1.4f\n", encoder_theta, gyro_theta);
 
 	update_errors();
 	gestalt_timer_reset();
@@ -380,8 +421,7 @@ void gestalt_parse_ble_buffer(uint8_t* buffer)
 	// path stream progress
 	bot_status_list[o_id].ps_progress = buffer[13];
 
-	printf("BLE RX > ID: %d x_pos: %1.2f y_pos: %1.2f theta: %1.2f", 
-		bot_status_list[o_id].bot_id, bot_status_list[o_id].x, bot_status_list[o_id].y,
-		bot_status_list[o_id].theta);
+	//printf("%d %1.2f %1.2f\n", bot_status_list[o_id].bot_id, bot_status_list[o_id].x, bot_status_list[o_id].y);
+	//	bot_status_list[o_id].theta);
 	
 }

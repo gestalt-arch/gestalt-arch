@@ -24,7 +24,8 @@ uint8_t ble_tx_buffer[32];
 
 // BLE scan/adv state flag
 static int8_t ble_comm_state = 0;
-uint32_t ble_timer_handle;
+static uint32_t ble_timer_handle;
+static int8_t ble_state_change = 0;
 
 #define BLE_COMM_INT_L 200000  // lower bound comm interval (us)
 #define BLE_COMM_INT_H 1000000 // upper bound comm interval (us)
@@ -99,7 +100,7 @@ void ble_evt_adv_report(ble_evt_t const* p_ble_evt)
 		adv_report->peer_addr.addr[4] == 0x98 &&
 		adv_report->peer_addr.addr[5] == 0xC0 )
 		{
-			printf("Gestalt report size: %x\n", adv_report->data.len);
+			//printf("Gestalt report size: %x\n", adv_report->data.len);
 			gestalt_parse_ble_buffer(adv_report->data.p_data);
 		}
 		
@@ -109,12 +110,33 @@ void ble_evt_adv_report(ble_evt_t const* p_ble_evt)
 // handles switching between ble comm states (adv and scan) 
 void ble_switch_state()
 {
-	printf("*BLE state switch*\n");
-	ble_comm_state = (ble_comm_state == 1) ? 0 : 1;
+	if(ble_state_change != 1) {
+		ble_comm_state = (ble_comm_state == 1) ? 0 : 1;
+		printf("*BLE state switch to %d*\n", ble_comm_state);
+		ble_state_change = 1;
+	}
 
 	// refresh comm interval timer
 	uint32_t ble_comm_interval = get_random_comm_interval(BLE_COMM_INT_L, BLE_COMM_INT_H);
 	ble_timer_handle = virtual_timer_start(ble_comm_interval, &ble_switch_state);
+}
+
+void handle_ble_state_change()
+{
+	//__disable_irq();
+	printf("BLE> State change %d\n", ble_comm_state);
+	if(ble_comm_state == 1) {
+		// transition to scan state
+		advertising_stop();
+		scanning_start();
+		printf("BLE> Scanning started\n");
+	}
+	else {
+		scanning_stop();
+		printf("BLE> Scanning stopped\n");
+	}
+	ble_state_change = 0;
+	//__enable_irq();
 }
 
 void corapp_init()
@@ -167,13 +189,11 @@ void corapp_run()
 
 	// update BLE advertise buffer
 	// ONLY if in advertise comm state
-	if(ble_comm_state == 1) {
+	if(ble_state_change == 1) 
+		handle_ble_state_change();
+
+	if(ble_comm_state == 0) {
 		// transition to scan state
-		advertising_stop();
-		scanning_start();
-	}
-	else {
-		scanning_stop();
 		simple_ble_adv_manuf_data(ble_tx_buffer, BLE_BUFF_SIZE);
 	}
 
@@ -185,12 +205,12 @@ void corapp_run()
 		case STOP:
 			//	STOP to ALIGN_CW
 			if (action == GESTALT_MOVE && cur_theta_error < -FLT_EPSILON) {
-				//state = ALIGN_CCW;
+				state = ALIGN_CCW;
 				turn_speed = TURN_SPEED;
 			}
 			// STOP to ALIGN_CCW
 			else if (action == GESTALT_MOVE && cur_theta_error > FLT_EPSILON) {
-				//state = ALIGN_CW;
+				state = ALIGN_CW;
 				turn_speed = TURN_SPEED;
 			}
 			// STOP to DRIVE
@@ -206,12 +226,12 @@ void corapp_run()
 			break;
 		case DRIVE:
 			//	DRIVE to ALIGN_CW
-			if (cur_theta_error <= -1.f) {
+			if (cur_theta_error <= -3.f) {
 				state = ALIGN_CCW;
 				turn_speed = ADJUST_SPEED;
 			}
 			//	DRIVE to ALIGN_CCW
-			else if (cur_theta_error >= 1.0f) {
+			else if (cur_theta_error >= 3.0f) {
 				state = ALIGN_CW;
 				turn_speed = ADJUST_SPEED;
 			}
