@@ -22,9 +22,9 @@ public class CubePositions : MonoBehaviour
         cube1Pos = GameObject.Find("Cube 1").transform.position;
         cube2Pos = GameObject.Find("Cube 2").transform.position;
         cube3Pos = GameObject.Find("Cube 3").transform.position;
-        cubeText.text = "Cute Cube: " + 
-                        cube1Pos.ToString("F2") + "\nAngy Cube: " +
-                        cube2Pos.ToString("F2") + "\nPepe Cube: " +
+        cubeText.text = "Task Position 1: " + 
+                        cube1Pos.ToString("F2") + "\nTask Position 2: " +
+                        cube2Pos.ToString("F2") + "\nTask Position 3: " +
                         cube3Pos.ToString("F2");
     }
 }
