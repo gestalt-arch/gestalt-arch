@@ -1,5 +1,5 @@
 #include "gestalt-client.h"
-
+#include "nrf.h"
 
 // The complete path stream solution
 static Gestalt_path_stream_sol_t ps_solution;
@@ -252,7 +252,7 @@ void gestalt_update_sensor_data(KobukiSensors_t* kobuki_sensors)
 	update_curr_pos(dist, curr_status.curr_theta);
 
 	//printf("left dist: %1.4f\tright dist: %1.4f\n", dist_left, dist_right);
-	//printf("enc theta: %1.4f\tgyro theta: %1.4f\n", encoder_theta, gyro_theta);
+	printf("enc theta: %1.4f\tgyro theta: %1.4f\n", encoder_theta, gyro_theta);
 
 	update_errors();
 	gestalt_timer_reset();
@@ -379,5 +379,9 @@ void gestalt_parse_ble_buffer(uint8_t* buffer)
 
 	// path stream progress
 	bot_status_list[o_id].ps_progress = buffer[13];
+
+	printf("BLE RX > ID: %d x_pos: %1.2f y_pos: %1.2f theta: %1.2f", 
+		bot_status_list[o_id].bot_id, bot_status_list[o_id].x, bot_status_list[o_id].y,
+		bot_status_list[o_id].theta);
 	
 }

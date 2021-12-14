@@ -92,9 +92,17 @@ void ble_evt_adv_report(ble_evt_t const* p_ble_evt)
 {
 	ble_gap_evt_adv_report_t const* adv_report = &(p_ble_evt->evt.gap_evt.params.adv_report);
 	//c0:98:e5:49:xx:xx
-	printf("\n\nReport received: %d %d\n", adv_report->peer_addr.addr[5], adv_report->peer_addr.addr[4]);
-	if(adv_report->peer_addr.addr[5] == 0xC0)
-		printf("FILTERED Report received: %x\n", adv_report->peer_addr.addr);
+	//printf("\n\nReport received: %d %d\n", adv_report->peer_addr.addr[5], adv_report->peer_addr.addr[4]);
+	if(adv_report->peer_addr.addr[1] == 0xF0 &&
+		adv_report->peer_addr.addr[2] == 0x49 &&
+		adv_report->peer_addr.addr[3] == 0xE5 &&
+		adv_report->peer_addr.addr[4] == 0x98 &&
+		adv_report->peer_addr.addr[5] == 0xC0 )
+		{
+			printf("Gestalt report size: %x\n", adv_report->data.len);
+			gestalt_parse_ble_buffer(adv_report->data.p_data);
+		}
+		
 }
 
 // ble_timer_handle virtual timer callback function
