@@ -15,6 +15,8 @@
 uint8_t buffer[522];
 uint8_t STATE = 0;
 
+YdLidarData_t lidar_data;
+
 NRF_SERIAL_DRV_UART_CONFIG_DEF(m_uart0_drv_config,
                                BUCKLER_UART_RX, BUCKLER_UART_TX,
                                0, 0,
@@ -77,9 +79,21 @@ static void ser_event_handler(nrf_serial_t const *p_serial, nrf_serial_event_t e
 
 void ser_rx_data(size_t size) {
     // Do something useful with recieved data
-    for (int i = 0; i < size; i++) {
-        printf("%x", buffer[i]);
-    }   
+    //for (int i = 0; i < size; i++) {
+    //    printf("%x", buffer[i]);
+    //}
+    __disable_irq();
+    get_lidar_data(buffer, &lidar_data);
+    printf("Distances ");
+    for (int i = 0; i < 429; i++) {
+        printf("%f", lidar_data.distance[i]);
+    }
+    printf("\nTheta ");
+    for (int i = 0; i < 429; i++) {
+        printf("%f", lidar_data.theta[i]);
+    }
+    __enable_irq();
+
 }
 
 int main(void) {
