@@ -12,10 +12,10 @@ APP_SOURCE_PATHS += .
 APP_SOURCES = $(notdir $(wildcard ./*.c))
 
 # Path to base of nRF52-base repo
-NRF_BASE_DIR = ../../nrf52x-base/
+NRF_BASE_DIR = ../../buckler-ext/software/nrf52x-base/
 
 # Include board Makefile (if any)
-include ../../boards/buckler_revC/Board.mk
+include ../../buckler-ext/software/boards/buckler_revC/Board.mk
 
 # Include main Makefile
 include $(NRF_BASE_DIR)make/AppMakefile.mk
