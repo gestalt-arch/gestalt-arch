@@ -48,7 +48,7 @@ static void ser_event_handler(nrf_serial_t const *p_serial, nrf_serial_event_t e
         {
             size_t read;
             uint8_t buffer[16];
-            nrf_serial_read(&serial_uart, buffer, sizeof(buffer) * 16, &read, 0);
+            nrf_serial_read(&serial_uart, &buffer, sizeof(buffer), &read, 0);
             ser_rx_data(buffer, read);
             break;
         }
@@ -68,7 +68,7 @@ static void ser_event_handler(nrf_serial_t const *p_serial, nrf_serial_event_t e
 
 void ser_rx_data(uint8_t *data, size_t size) {
     // Do something useful with recieved data
-    printf("%h", data[0]);
+    printf("%.*s", size, data);
 }
 
 int main(void) {
