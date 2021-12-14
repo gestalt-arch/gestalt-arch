@@ -70,14 +70,17 @@ static void ser_event_handler(nrf_serial_t const *p_serial, nrf_serial_event_t e
 
 void ser_rx_data(uint8_t *data, size_t size) {
     // Do something useful with recieved data
-    printf("%.*s", size, data);
+    printf("\n");
+    for (int i = 0 < size; i++) {
+        printf("%h ", data[i]);
+    }
 }
 
 int main(void) {
     ret_code_t error_code = NRF_SUCCESS;
 
     nrf_serial_init(&serial_uart, &m_uart0_drv_config, &serial_config);
-
+    /*
     while (1) {
         nrf_delay_ms(1000);
         YdLidarData_t* lidar = get_lidar_data(lidar_buffer, &lidar_data);
@@ -94,4 +97,5 @@ int main(void) {
         }
         
     }
+    */
 }
