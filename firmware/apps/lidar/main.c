@@ -12,7 +12,7 @@
 
 #include "buckler.h"
 
-uint8_t lidar_buffer[522];
+//uint8_t lidar_buffer[522];
 YdLidarData_t lidar_data;
 
 NRF_SERIAL_DRV_UART_CONFIG_DEF(m_uart0_drv_config,
@@ -49,8 +49,9 @@ static void ser_event_handler(nrf_serial_t const *p_serial, nrf_serial_event_t e
         }
         case NRF_SERIAL_EVENT_RX_DATA:
         {
+            uint8_t buffer[522];
             size_t read;
-            nrf_serial_read(&serial_uart, &lidar_buffer, sizeof(lidar_buffer), &read, 0);
+            nrf_serial_read(&serial_uart, &buffer, sizeof(buffer), &read, 0);
             //ser_rx_data(&lidar_buffer, read);
             break;
         }
@@ -77,7 +78,7 @@ int main(void) {
     ret_code_t error_code = NRF_SUCCESS;
 
     nrf_serial_init(&serial_uart, &m_uart0_drv_config, &serial_config);
-
+    /*
     while (1) {
         nrf_delay_ms(1000);
         YdLidarData_t* lidar = get_lidar_data(lidar_buffer, &lidar_data);
@@ -93,4 +94,5 @@ int main(void) {
             printf("%f ", lidar->theta[i]);
         }
     }
+    */
 }
