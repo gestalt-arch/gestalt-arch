@@ -51,7 +51,7 @@ static void ser_event_handler(nrf_serial_t const *p_serial, nrf_serial_event_t e
         {
             size_t read;
             nrf_serial_read(&serial_uart, &lidar_buffer, sizeof(lidar_buffer), &read, 0);
-            //ser_rx_data(&lidar_buffer, read);
+            ser_rx_data(lidar_buffer, read);
             break;
         }
         case NRF_SERIAL_EVENT_DRV_ERR:
@@ -82,7 +82,7 @@ int main(void) {
         nrf_delay_ms(1000);
         YdLidarData_t* lidar = get_lidar_data(lidar_buffer, &lidar_data);
 
-
+        
         printf("Distances: ");
         for (int i = 0; i < 429; i++) {
             printf("%f ", lidar->distance[i]);
@@ -92,5 +92,6 @@ int main(void) {
         for (int i = 0; i < 429; i++) {
             printf("%f ", lidar->theta[i]);
         }
+        
     }
 }
