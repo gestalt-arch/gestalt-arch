@@ -12,7 +12,7 @@
 
 #include "buckler.h"
 
-uint8_t buffer[522];
+uint8_t buffer[90];
 uint8_t STATE = 0;
 
 YdLidarData_t lidar_data;
@@ -25,12 +25,12 @@ NRF_SERIAL_DRV_UART_CONFIG_DEF(m_uart0_drv_config,
                                UART_DEFAULT_CONFIG_IRQ_PRIORITY);
 
 #define SERIAL_FIFO_TX_SIZE 0
-#define SERIAL_FIFO_RX_SIZE 522
+#define SERIAL_FIFO_RX_SIZE 90
 
 NRF_SERIAL_QUEUES_DEF(serial_queue, SERIAL_FIFO_TX_SIZE, SERIAL_FIFO_RX_SIZE);
 
 #define SERIAL_BUFF_TX_SIZE 0
-#define SERIAL_BUFF_RX_SIZE 255
+#define SERIAL_BUFF_RX_SIZE 90
 
 NRF_SERIAL_BUFFERS_DEF(serial_buffs, SERIAL_BUFF_TX_SIZE, SERIAL_BUFF_RX_SIZE);
 
@@ -52,14 +52,7 @@ static void ser_event_handler(nrf_serial_t const *p_serial, nrf_serial_event_t e
         case NRF_SERIAL_EVENT_RX_DATA:
         {
             size_t read;
-            if (STATE == 0) {
-                nrf_serial_read(&serial_uart, buffer, sizeof(buffer), &read, 0);
-                STATE = 1;
-            }
-            else { 
-                nrf_serial_read(&serial_uart, (buffer + 255), sizeof(buffer), &read, 0);
-                STATE = 0;
-            }
+            nrf_serial_read(&serial_uart, buffer, sizeof(buffer), &read, 0);
             ser_rx_data(read);
             break;
         }
