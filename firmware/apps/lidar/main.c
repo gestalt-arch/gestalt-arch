@@ -84,10 +84,12 @@ void ser_rx_data(size_t size) {
     //}
     __disable_irq();
     get_lidar_data(buffer, &lidar_data);
+    /*
     printf("Distances ");
     for (int i = 0; i < 429; i++) {
         printf("%f ", lidar_data.distance[i]);
     }
+    */
     printf("\nTheta ");
     for (int i = 0; i < 429; i++) {
         printf("%f ", lidar_data.theta[i]);
