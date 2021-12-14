@@ -51,7 +51,7 @@ static void ser_event_handler(nrf_serial_t const *p_serial, nrf_serial_event_t e
         {
             size_t read;
             nrf_serial_read(&serial_uart, &lidar_buffer, sizeof(lidar_buffer), &read, 0);
-            ser_rx_data(lidar_buffer, read);
+            //ser_rx_data(&lidar_buffer, read);
             break;
         }
         case NRF_SERIAL_EVENT_DRV_ERR:
