@@ -51,10 +51,10 @@ static void ser_event_handler(nrf_serial_t const *p_serial, nrf_serial_event_t e
         {
             size_t read;
             if (STATE == 0) {
-                nrf_serial_read(&serial_uart, &buffer, sizeof(buffer), &read, 0);
+                nrf_serial_read(&serial_uart, buffer, sizeof(buffer), &read, 0);
             }
             else {
-                nrf_serial_read(&serial_uart, &(buffer + 255), sizeof(buffer), &read, 0);
+                nrf_serial_read(&serial_uart, (buffer + 255), sizeof(buffer), &read, 0);
             }
             
             //ser_rx_data(read);
