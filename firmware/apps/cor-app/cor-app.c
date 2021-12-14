@@ -22,6 +22,15 @@ uint8_t ble_rx_buffer[32];
 uint8_t ble_tx_buffer[32];
 #define BLE_BUFF_SIZE 14
 
+// BLE scan/adv state flag
+static int8_t ble_comm_state = 0;
+static uint32_t ble_timer_handle;
+static int8_t ble_state_change = 0;
+
+#define BLE_COMM_INT_L 200000  // lower bound comm interval (us)
+#define BLE_COMM_INT_H 1000000 // upper bound comm interval (us)
+
+
 static int8_t turn_speed = TURN_SPEED;
 
 // Intervals for advertising and connections
@@ -72,6 +81,63 @@ static void i2c_reg_write(uint8_t i2c_addr, uint8_t reg_addr, uint8_t data) {
   APP_ERROR_CHECK(error_code);
 }
 
+// get random uint32_t interval between lower bound (l_bound) and upper bound (u_bound)
+// to be used for timing the ble comm interval switching
+static inline uint32_t get_random_comm_interval(uint32_t l_bound, uint32_t u_bound)
+{
+	return (rand() % (u_bound - l_bound + 1)) + l_bound;
+}
+
+// Callback for advertising report
+void ble_evt_adv_report(ble_evt_t const* p_ble_evt)
+{
+	ble_gap_evt_adv_report_t const* adv_report = &(p_ble_evt->evt.gap_evt.params.adv_report);
+	//c0:98:e5:49:xx:xx
+	//printf("\n\nReport received: %d %d\n", adv_report->peer_addr.addr[5], adv_report->peer_addr.addr[4]);
+	if(adv_report->peer_addr.addr[1] == 0xF0 &&
+		adv_report->peer_addr.addr[2] == 0x49 &&
+		adv_report->peer_addr.addr[3] == 0xE5 &&
+		adv_report->peer_addr.addr[4] == 0x98 &&
+		adv_report->peer_addr.addr[5] == 0xC0 )
+		{
+			//printf("Gestalt report size: %x\n", adv_report->data.len);
+			gestalt_parse_ble_buffer(adv_report->data.p_data);
+		}
+		
+}
+
+// ble_timer_handle virtual timer callback function
+// handles switching between ble comm states (adv and scan) 
+void ble_switch_state()
+{
+	if(ble_state_change != 1) {
+		ble_comm_state = (ble_comm_state == 1) ? 0 : 1;
+		printf("*BLE state switch to %d*\n", ble_comm_state);
+		ble_state_change = 1;
+	}
+
+	// refresh comm interval timer
+	uint32_t ble_comm_interval = get_random_comm_interval(BLE_COMM_INT_L, BLE_COMM_INT_H);
+	ble_timer_handle = virtual_timer_start(ble_comm_interval, &ble_switch_state);
+}
+
+void handle_ble_state_change()
+{
+	//__disable_irq();
+	printf("BLE> State change %d\n", ble_comm_state);
+	if(ble_comm_state == 1) {
+		// transition to scan state
+		advertising_stop();
+		scanning_start();
+		printf("BLE> Scanning started\n");
+	}
+	else {
+		scanning_stop();
+		printf("BLE> Scanning stopped\n");
+	}
+	ble_state_change = 0;
+	//__enable_irq();
+}
 
 void corapp_init()
 {
@@ -88,13 +154,20 @@ void corapp_init()
 	ret_code_t error_code = nrf_twi_mngr_init(&twi_mngr_instance, &i2c_config);
 	APP_ERROR_CHECK(error_code);
 
-	// Init BLE
-	simple_ble_app = simple_ble_init(&ble_config);
+	nrf_delay_ms(2000);
 
 	// Init virtual timer library
 	virtual_timer_init();
 
-	nrf_delay_ms(2000);
+	// Init BLE
+	simple_ble_app = simple_ble_init(&ble_config);
+	ble_comm_state = 0; // start in broadcast mode
+	// start switch timer
+	uint32_t ble_comm_interval = get_random_comm_interval(BLE_COMM_INT_L, BLE_COMM_INT_H);
+	ble_timer_handle = virtual_timer_start(ble_comm_interval, &ble_switch_state);
+	for(int i = 0; i < BLE_BUFF_SIZE; i++)
+		ble_tx_buffer[i] = 0;
+	simple_ble_adv_manuf_data(ble_tx_buffer, BLE_BUFF_SIZE);
 
 	// initialize LSM9DS1 driver
 	lsm9ds1_init(&twi_mngr_instance);
@@ -115,10 +188,16 @@ void corapp_run()
     cur_theta_error = status->theta_error;
 
 	// update BLE advertise buffer
-	gestalt_prep_ble_buffer(ble_tx_buffer); // should be full of zeros
-	simple_ble_adv_manuf_data(ble_tx_buffer, BLE_BUFF_SIZE);
+	// ONLY if in advertise comm state
+	if(ble_state_change == 1) 
+		handle_ble_state_change();
 
-	printf("curr_theta = %1.3f | cur_theta_error: %1.3f\n", status->curr_theta, cur_theta_error);
+	if(ble_comm_state == 0) {
+		// transition to scan state
+		simple_ble_adv_manuf_data(ble_tx_buffer, BLE_BUFF_SIZE);
+	}
+
+	//printf("curr_theta = %1.3f | cur_theta_error: %1.3f\n", status->curr_theta, cur_theta_error);
     action = gestalt_get_current_action();
 
 	// test current state
@@ -147,12 +226,12 @@ void corapp_run()
 			break;
 		case DRIVE:
 			//	DRIVE to ALIGN_CW
-			if (cur_theta_error <= -1.f) {
+			if (cur_theta_error <= -3.f) {
 				state = ALIGN_CCW;
 				turn_speed = ADJUST_SPEED;
 			}
 			//	DRIVE to ALIGN_CCW
-			else if (cur_theta_error >= 1.0f) {
+			else if (cur_theta_error >= 3.0f) {
 				state = ALIGN_CW;
 				turn_speed = ADJUST_SPEED;
 			}
