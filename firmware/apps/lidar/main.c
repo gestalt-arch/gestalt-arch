@@ -85,12 +85,12 @@ int main(void) {
 
 
         printf("Distances: ");
-        for (int i = 0; i < RESOLUTION; i++) {
+        for (int i = 0; i < 429; i++) {
             printf("%f ", lidar->distance[i]);
         }
 
         printf("\nThetas: ");
-        for (int i = 0; i < RESOLUTION; i++) {
+        for (int i = 0; i < 429; i++) {
             printf("%f ", lidar->theta[i]);
         }
     }
