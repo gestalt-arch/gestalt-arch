@@ -6,7 +6,7 @@
 #define TURN_SPEED 50
 #define ADJUST_SPEED 25
 #define COLLISION_THRESHOLD 0.4f
-#define FORCE_STOP_TIMER 3000000
+#define FORCE_STOP_TIMER 500000
 #define FORCE_REVERSE_TIMER 3000000
 
 // initialize state and state variables
@@ -306,7 +306,7 @@ void corapp_run()
 				force_stop_timeout_flag = false;
 			}
 			// DRIVE to FORCE_STOP - GESTALT type
-			if(collide_bot > -1) {
+			else if(collide_bot > -1) {
 				state = FORCE_STOP;
 				force_stop_type = KOBUKI_GESTALT;
 				kobukiDriveDirect(0,0);
@@ -339,8 +339,23 @@ void corapp_run()
 			break;
 		}
 		case ALIGN_CW: {
+			if(check_bump_sensors(&sensors)) {
+				state = FORCE_STOP;
+				force_stop_type = KOBUKI_BUMP;
+				kobukiDriveDirect(0,0);
+				force_stop_timer_h = virtual_timer_start(FORCE_STOP_TIMER, &collision_timer_evt);
+				force_stop_timeout_flag = false;
+			}
+			// DRIVE to FORCE_STOP - GESTALT type
+			else if(collide_bot > -1) {
+				state = FORCE_STOP;
+				force_stop_type = KOBUKI_GESTALT;
+				kobukiDriveDirect(0,0);
+				force_stop_timer_h = virtual_timer_start(FORCE_STOP_TIMER, &collision_timer_evt);
+				force_stop_timeout_flag = false;
+			}
 			//	ALIGN_CW to DRIVE
-			if (fabs(cur_theta_error) <= 0.5) {
+			else if (fabs(cur_theta_error) <= 0.5) {
 				state = DRIVE;
 			}
 			//	ALIGN_CW
@@ -354,7 +369,22 @@ void corapp_run()
 		}
 		case ALIGN_CCW: { 
 			// ALIGN_CCW to DRIVE
-			if (fabs(cur_theta_error) <= 0.5f) {
+			if(check_bump_sensors(&sensors)) {
+				state = FORCE_STOP;
+				force_stop_type = KOBUKI_BUMP;
+				kobukiDriveDirect(0,0);
+				force_stop_timer_h = virtual_timer_start(FORCE_STOP_TIMER, &collision_timer_evt);
+				force_stop_timeout_flag = false;
+			}
+			// DRIVE to FORCE_STOP - GESTALT type
+			else if(collide_bot > -1) {
+				state = FORCE_STOP;
+				force_stop_type = KOBUKI_GESTALT;
+				kobukiDriveDirect(0,0);
+				force_stop_timer_h = virtual_timer_start(FORCE_STOP_TIMER, &collision_timer_evt);
+				force_stop_timeout_flag = false;
+			}
+			else if (fabs(cur_theta_error) <= 0.5f) {
 				state = DRIVE;
 			}
 			// ALIGN_CCW to ALIGN_CCW
@@ -369,17 +399,9 @@ void corapp_run()
 		case FORCE_STOP: {
 			if(force_stop_timeout_flag){
 				force_stop_timeout_flag = false;
-				if(force_stop_type == KOBUKI_BUMP) {
-					state = FORCE_REVERSE;
-					virtual_timer_start(FORCE_REVERSE_TIMER, &force_reverse_timer_evt);
-					kobukiDriveDirect(-DRIVE_SPEED, -DRIVE_SPEED);
-				}
-				else if(force_stop_type == KOBUKI_GESTALT) {
-					Gestalt_goal_t tmp_goal = generate_avoid_goal(&status->curr_pos, status->curr_theta);
-					gestalt_force_goal(&tmp_goal);
-					state = STOP;
-					kobukiDriveDirect(0, 0);	
-				}
+				state = FORCE_REVERSE;
+				virtual_timer_start(FORCE_REVERSE_TIMER, &force_reverse_timer_evt);
+				kobukiDriveDirect(-DRIVE_SPEED, -DRIVE_SPEED);
 			}
 			else {
 				display_write("FORCE_STOP", DISPLAY_LINE_0);
@@ -390,6 +412,8 @@ void corapp_run()
 		case FORCE_REVERSE: {
 			if(force_reverse_timeout_flag) {
 				force_reverse_timeout_flag = false;
+				Gestalt_goal_t tmp_goal = generate_avoid_goal(&status->curr_pos, status->curr_theta);
+				gestalt_force_goal(&tmp_goal);
 				state = STOP;
 				kobukiDriveDirect(0, 0);
 			}

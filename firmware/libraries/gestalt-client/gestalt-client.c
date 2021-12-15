@@ -204,7 +204,7 @@ void gestalt_init_test_path()
 	ps_solution.path_stream_vector[2].y_pos_stream[2] = -0.5f;
 	ps_solution.path_stream_vector[2].action_stream[2] = GESTALT_MOVE;
 
-	ps_solution.path_stream_vector[2].x_pos_stream[3] = 0.0f;
+	ps_solution.path_stream_vector[2].x_pos_stream[3] = 0.5f;
 	ps_solution.path_stream_vector[2].y_pos_stream[3] = 0.0f;
 	ps_solution.path_stream_vector[2].action_stream[3] = GESTALT_MOVE;
 
@@ -316,6 +316,8 @@ void gestalt_send_goal_complete()
 	curr_goal.curr_x_goal = target_ps.x_pos_stream[ps_prog + 1];
 	curr_goal.curr_y_goal = target_ps.y_pos_stream[ps_prog + 1];
 	curr_goal.curr_action_goal = target_ps.action_stream[ps_prog + 1];
+
+	forced_goal = false;
 
 	//printf("Goal pos: %1.2f, %1.2f\n", curr_goal.curr_x_goal, curr_goal.curr_y_goal);
 	update_errors();
