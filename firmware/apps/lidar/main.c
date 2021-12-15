@@ -84,11 +84,12 @@ void ser_rx_data(size_t size) {
     for (int i = 0; i < 429; i++) {
         printf("%f ", lidar_data.distance[i]);
     }
-    */
+
     printf("\nTheta ");
     for (int i = 0; i < 429 * 2; i++) {
         printf("%f ", lidar_data.theta[i]);
     }
+    */
     __enable_irq();
 
 }
