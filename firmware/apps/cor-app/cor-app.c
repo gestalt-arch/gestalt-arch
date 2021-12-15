@@ -208,14 +208,14 @@ void corapp_init()
 
 
 	sprintf(buf, "4 %x:%x", ble_config.device_id >> 8, ble_config.device_id & 0xFF);
-	printf("4")
+	printf("4");
 	display_write(buf, DISPLAY_LINE_0);
 	while(1) {
 		power_manage();
 	}
 
 	sprintf(buf, "5 %x:%x", ble_config.device_id >> 8, ble_config.device_id & 0xFF);
-	printf("5")
+	printf("5");
 	display_write(buf, DISPLAY_LINE_0);
 	// Init BLE
 	simple_ble_app = simple_ble_init(&ble_config);
