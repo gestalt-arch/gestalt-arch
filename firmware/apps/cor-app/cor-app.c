@@ -46,6 +46,26 @@ static simple_ble_config_t ble_config = {
 
 simple_ble_app_t* simple_ble_app;
 
+// 60267642-592e-11ec-bf63-0242ac130002
+static simple_ble_service_t main_service = {{
+  .uuid128 = {0x02,0x00,0x13,0xAC,0x42,0x02,0x63,0xBF,
+              0xEC,0x11,0x2E,0x59,0x42,0x76,0x26,0x60}
+}};
+
+// 60267643-592e-11ec-bf63-0242ac130002
+static simple_ble_char_t rx_char = {.uuid16 = 0x7643};
+static uint32_t rx_value;
+
+// 60267644-592e-11ec-bf63-0242ac130002
+static simple_ble_char_t tx_char = {.uuid16 = 0x7644};
+static uint32_t tx_value;
+
+void ble_evt_write(ble_evt_t const* p_ble_evt) {
+  if (simple_ble_is_char_event(p_ble_evt, &rx_char)) {
+    tx_value = rx_value * 2;
+  }
+}
+
 
 #define I2C_DEVICE_ID 0x66
 
@@ -159,6 +179,26 @@ void corapp_init()
 	// Init virtual timer library
 	virtual_timer_init();
 
+	nrf_gpio_cfg_output(BUCKLER_LED0);
+
+  	nrf_delay_ms(1);
+
+	char buf[16];
+	sprintf(buf, "device id %x:%x", ble_config.device_id >> 8, ble_config.device_id & 0xFF);
+	display_write(buf, DISPLAY_LINE_0);
+
+	// Setup BLE
+	simple_ble_app = simple_ble_init(&ble_config);
+	simple_ble_add_service(&main_service);
+	simple_ble_add_characteristic(1, 1, 0, 0, sizeof(rx_value), (uint8_t*)&rx_value, &main_service, &rx_char);
+	simple_ble_add_characteristic(1, 1, 0, 0, sizeof(tx_value), (uint8_t*)&tx_value, &main_service, &tx_char);
+
+	// Start Advertising
+	simple_ble_adv_only_name();
+
+	while(1) {
+		power_manage();
+	}
 	// Init BLE
 	simple_ble_app = simple_ble_init(&ble_config);
 	ble_comm_state = 0; // start in broadcast mode
