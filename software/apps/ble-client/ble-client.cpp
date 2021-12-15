@@ -35,55 +35,45 @@ int main()
         // for each pathstream, we save the following
         // botid
         input_file >> curPathStream.bot_id;
+        cout << curPathStream.bot_id << "; ";
 
         // pathlength
         input_file >> curPathStream.path_length;
+        cout << curPathStream.path_length << "; ";
 
         // array of x
         for (int j = 0; j < curPathStream.path_length; j++)
         {
             input_file >> curPathStream.x_pos_stream[j];
+            cout << curPathStream.x_pos_stream[j] << "; ";
         }
 
         // array of y
         for (int j = 0; j < curPathStream.path_length; j++)
         {
             input_file >> curPathStream.y_pos_stream[j];
+            cout << curPathStream.y_pos_stream[j] << "; ";
         }
 
         // array of action
         for (int j = 0; j < curPathStream.path_length; j++)
         {
             input_file >> curPathStream.action_stream[j];
+            cout << curPathStream.action_stream[j] << "; ";
         }
 
         // array of exclusion
         for (int j = 0; j < curPathStream.path_length; j++)
         {
             input_file >> curPathStream.exclusion_stream[j];
+            cout << curPathStream.exclusion_stream[j] << "; ";
         }
     }
 
-    /* An individual path_stream, containing all path information for a single bot */
-    // struct PathStream
-    // {
-    //     float x_pos_stream[MAX_SOLUTION_LENGTH];
-    //     float y_pos_stream[MAX_SOLUTION_LENGTH];
-    //     int action_stream[MAX_SOLUTION_LENGTH];
-    //     int exclusion_stream[MAX_SOLUTION_LENGTH];
-    //     unsigned int path_length;
-    //     int bot_id;
-    // };
-
-    // /* A complete path_stream solution, containing all path_streams for all bots in the environment */
-    // struct PathStreamSolution
-    // {
-    //     PathStream path_stream_vector[MAX_BOTS];
-    //     unsigned int num_path_streams;
-    // };
-
     cout << endl;
     input_file.close();
+
+    // do bluetooth GATT someone pls ty
 
     return EXIT_SUCCESS;
 }
