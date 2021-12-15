@@ -8,7 +8,7 @@ from bleak import BleakClient, BleakError
 # args = parse_ble_args('Communicates with buckler over BLE')
 # addr = args.addr.lower()
 # timeout = args.timeout
-timeout = 6
+timeout = 6.0
 #handle_sigint()
 
 ## Example of how to connect to multiple BLE Peripherals
@@ -50,7 +50,7 @@ class BLEPeripheral():
 async def ble_connect_to(address):
     print(f"searching for device {address} ({timeout}s timeout)")
     try:
-        async with BleakClient(address, adapter="hci1", timeout=timeout) as client:
+        async with BleakClient(address, adapter="hci0", timeout=timeout) as client:
             print(f"Connected to device {client.address}: {client.is_connected}")
             try:
                 peripheral = BLEPeripheral(client)
@@ -66,9 +66,9 @@ async def ble_connect_to(address):
         print("not found")
 
 async def main(adresses):
-    while (len(adresses) != 0):
-        for addr in adresses:
-            await ble_connect_to(addr)
+	while (len(adresses) != 0):
+	    for addr in adresses:
+	        await ble_connect_to(addr)
     # running_tasks = []
     # while True:
     #     active_addrs = [task[0] for task in running_tasks]

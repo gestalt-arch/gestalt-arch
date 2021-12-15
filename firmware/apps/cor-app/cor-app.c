@@ -67,7 +67,7 @@ static simple_ble_service_t main_service = {{
 
 // 60267643-592e-11ec-bf63-0242ac130002
 static simple_ble_char_t rx_char = {.uuid16 = 0x7643};
-static char rx_value[64];
+static char rx_value[228];
 //static uint32_t rx_value;
 
 // 60267644-592e-11ec-bf63-0242ac130002
