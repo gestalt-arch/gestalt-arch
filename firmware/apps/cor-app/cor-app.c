@@ -52,12 +52,35 @@ static simple_ble_config_t ble_config = {
         .platform_id       = 0x49,    // used as 4th octect in device BLE address
         .device_id         = BOT_BLE_ID, // TODO: replace with your lab bench number
         .adv_name          = BOT_BLE_NAME, // used in advertisements if there is room
-        .adv_interval      = MSEC_TO_UNITS(100, UNIT_0_625_MS),
-        .min_conn_interval = MSEC_TO_UNITS(100, UNIT_1_25_MS),
-        .max_conn_interval = MSEC_TO_UNITS(200, UNIT_1_25_MS),
+		.adv_interval      = MSEC_TO_UNITS(500, UNIT_0_625_MS),
+        .min_conn_interval = MSEC_TO_UNITS(50, UNIT_1_25_MS),
+        .max_conn_interval = MSEC_TO_UNITS(500, UNIT_1_25_MS),
+        //.adv_interval      = MSEC_TO_UNITS(100, UNIT_0_625_MS),
+        //.min_conn_interval = MSEC_TO_UNITS(100, UNIT_1_25_MS),
+        //.max_conn_interval = MSEC_TO_UNITS(200, UNIT_1_25_MS),
 };
 
 simple_ble_app_t* simple_ble_app;
+
+// 60267642-592e-11ec-bf63-0242ac130002
+static simple_ble_service_t main_service = {{
+  .uuid128 = {0x02,0x00,0x13,0xAC,0x42,0x02,0x63,0xBF,
+              0xEC,0x11,0x2E,0x59,0x42,0x76,0x26,0x60}
+}};
+
+// 60267643-592e-11ec-bf63-0242ac130002
+static simple_ble_char_t rx_char = {.uuid16 = 0x7643};
+static uint32_t rx_value;
+
+// 60267644-592e-11ec-bf63-0242ac130002
+static simple_ble_char_t tx_char = {.uuid16 = 0x7644};
+static uint32_t tx_value;
+
+void ble_evt_write(ble_evt_t const* p_ble_evt) {
+  if (simple_ble_is_char_event(p_ble_evt, &rx_char)) {
+    tx_value = rx_value * 2;
+  }
+}
 
 
 #define I2C_DEVICE_ID 0x66
@@ -216,6 +239,41 @@ void corapp_init()
 	// Init virtual timer library
 	virtual_timer_init();
 
+	nrf_gpio_cfg_output(BUCKLER_LED0);
+
+  	nrf_delay_ms(1);
+
+	char buf[16];
+	sprintf(buf, "device id %x:%x", ble_config.device_id >> 8, ble_config.device_id & 0xFF);
+	display_write(buf, DISPLAY_LINE_0);
+
+
+
+	// Setup BLE
+	simple_ble_app = simple_ble_init(&ble_config);
+	sprintf(buf, "2 %x:%x", ble_config.device_id >> 8, ble_config.device_id & 0xFF);
+	display_write(buf, DISPLAY_LINE_0);
+	simple_ble_add_service(&main_service);
+	sprintf(buf, "3 %x:%x", ble_config.device_id >> 8, ble_config.device_id & 0xFF);
+	display_write(buf, DISPLAY_LINE_0);
+	simple_ble_add_characteristic(1, 1, 0, 0, sizeof(rx_value), (uint8_t*)&rx_value, &main_service, &rx_char);
+	simple_ble_add_characteristic(1, 1, 0, 0, sizeof(tx_value), (uint8_t*)&tx_value, &main_service, &tx_char);
+
+	nrf_delay_ms(50);
+	// Start Advertising
+	simple_ble_adv_only_name();
+
+
+	sprintf(buf, "4 %x:%x", ble_config.device_id >> 8, ble_config.device_id & 0xFF);
+	printf("4");
+	display_write(buf, DISPLAY_LINE_0);
+	while(1) {
+		power_manage();
+	}
+
+	sprintf(buf, "5 %x:%x", ble_config.device_id >> 8, ble_config.device_id & 0xFF);
+	printf("5");
+	display_write(buf, DISPLAY_LINE_0);
 	// Init BLE
 	simple_ble_app = simple_ble_init(&ble_config);
 	ble_comm_state = 0; // start in broadcast mode
