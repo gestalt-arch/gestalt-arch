@@ -1,9 +1,6 @@
 #include <iostream>
 #include <fstream>
-extern "C"
-{
-#include "gestalt-solver.h"
-}
+#include "..\..\libraries\gestalt-solver\gestalt-solver.h"
 
 using std::cerr;
 using std::cout;
@@ -29,41 +26,41 @@ int main()
     input_file >> numPathStreams;
     cout << numPathStreams << "; ";
 
-    PathStreamSolution theSolution;
-    theSolution->num_path_streams = numPathStreams;
+    GestaltSolver::PathStreamSolution theSolution;
+    theSolution.num_path_streams = numPathStreams;
 
     for (int i = 0; i < numPathStreams; i++)
     {
-        PathStream curPathStream = theSolution->path_stream_vector[i];
+        GestaltSolver::PathStream curPathStream = theSolution.path_stream_vector[i];
         // for each pathstream, we save the following
         // botid
-        input_file >> curPathStream->bot_id;
+        input_file >> curPathStream.bot_id;
 
         // pathlength
-        input_file >> curPathStream->path_length;
+        input_file >> curPathStream.path_length;
 
         // array of x
-        for (int j = 0; j < curPathStream->path_length; j++)
+        for (int j = 0; j < curPathStream.path_length; j++)
         {
-            input_file >> curPathStream->x_pos_stream[j];
+            input_file >> curPathStream.x_pos_stream[j];
         }
 
         // array of y
-        for (int j = 0; j < curPathStream->path_length; j++)
+        for (int j = 0; j < curPathStream.path_length; j++)
         {
-            input_file >> curPathStream->y_pos_stream[j];
+            input_file >> curPathStream.y_pos_stream[j];
         }
 
         // array of action
-        for (int j = 0; j < curPathStream->path_length; j++)
+        for (int j = 0; j < curPathStream.path_length; j++)
         {
-            input_file >> curPathStream->action_stream[j];
+            input_file >> curPathStream.action_stream[j];
         }
 
         // array of exclusion
-        for (int j = 0; j < curPathStream->path_length; j++)
+        for (int j = 0; j < curPathStream.path_length; j++)
         {
-            input_file >> curPathStream->exclusion_stream[j];
+            input_file >> curPathStream.exclusion_stream[j];
         }
     }
 

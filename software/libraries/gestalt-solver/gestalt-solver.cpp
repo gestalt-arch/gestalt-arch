@@ -77,7 +77,7 @@ unsigned int GestaltSolver::solve_pathstream(PathStreamSolution* path_stream_sol
     // create initial A* graph
 
 
-    AStarGraph init_graph = AStarGraph(STATE_GRAPH_DIM, solution_config->env_size, solution_config->bot_size, solution_config->obj_size);
+    //AStarGraph init_graph = AStarGraph(STATE_GRAPH_DIM, solution_config->env_size, solution_config->bot_size, solution_config->obj_size);
 
    
 
@@ -91,7 +91,7 @@ GestaltSolver::AStarGraph::AStarGraph(int graph_dim, float env_size, float bot_s
     this->obj_size = obj_size;
     float pos_increment = (float)graph_dim / env_size;
     std::vector<std::vector<AStarNode> > all_nodes(graph_dim);
-    this->pos_node_map = std::unordered_map<Vector2, AStarNode>();
+    //this->pos_node_map = std::unordered_map<Vector2, AStarNode>();
     // Generate all nodes and populate pos_node_map
     for (int r = 0; r < graph_dim; r++) {
         all_nodes.push_back(std::vector<AStarNode>(graph_dim));
@@ -105,7 +105,7 @@ GestaltSolver::AStarGraph::AStarGraph(int graph_dim, float env_size, float bot_s
             node.occupied = false;
             
             all_nodes[r].push_back(node);
-            this->pos_node_map.insert({ pos, node });
+            //this->pos_node_map.insert({ pos, node });
         }
     }
     // Make all connections

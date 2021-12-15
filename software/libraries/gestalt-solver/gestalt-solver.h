@@ -116,7 +116,7 @@ extern "C"
         private:
             float bot_size;
             float obj_size;
-            std::unordered_map<Vector2, AStarNode> pos_node_map;
+            //std::unordered_map<Vector2, AStarNode> pos_node_map;
         };
 
         struct DistNode
