@@ -5,7 +5,7 @@ void swap(float* a, float* b) {
 } 
   
 int partition (float* arr1, float* arr2, uint16_t low, uint16_t high) { 
-    float pivot = arr[high]; 
+    float pivot = arr1[high]; 
     uint16_t i = (low - 1); 
     for (uint16_t j = low; j <= high - 1; j++) {  
         if (arr1[j] < pivot) { 
