@@ -29,9 +29,9 @@
 
 #include "virtual_timer.h"
 
-#define GESTALT_BOT_ID 3
-#define BOT_BLE_ID 0xF0C3 // Set LSB = GESTALT_BOT_ID
-#define BOT_BLE_NAME "GS 3" // Set name to "GS [BOT_ID]"
+#define GESTALT_BOT_ID 2
+#define BOT_BLE_ID 0xF0C2 // Set LSB = GESTALT_BOT_ID
+#define BOT_BLE_NAME "GS 2" // Set name to "GS [BOT_ID]"
 
 typedef enum {
   STOP,

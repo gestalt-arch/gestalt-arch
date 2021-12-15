@@ -1,6 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include "..\..\libraries\gestalt-solver\gestalt-solver.h"
+#include "../../libraries/gestalt-solver/gestalt-solver.h"
 
 using std::cerr;
 using std::cout;
@@ -74,6 +74,6 @@ int main()
     input_file.close();
 
     // do bluetooth GATT someone pls ty
-
+    system("python3 testing.py");
     return EXIT_SUCCESS;
 }

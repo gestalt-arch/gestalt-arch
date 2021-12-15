@@ -52,12 +52,9 @@ static simple_ble_config_t ble_config = {
         .platform_id       = 0x49,    // used as 4th octect in device BLE address
         .device_id         = BOT_BLE_ID, // TODO: replace with your lab bench number
         .adv_name          = BOT_BLE_NAME, // used in advertisements if there is room
-		.adv_interval      = MSEC_TO_UNITS(500, UNIT_0_625_MS),
-        .min_conn_interval = MSEC_TO_UNITS(50, UNIT_1_25_MS),
-        .max_conn_interval = MSEC_TO_UNITS(500, UNIT_1_25_MS),
-        //.adv_interval      = MSEC_TO_UNITS(100, UNIT_0_625_MS),
-        //.min_conn_interval = MSEC_TO_UNITS(100, UNIT_1_25_MS),
-        //.max_conn_interval = MSEC_TO_UNITS(200, UNIT_1_25_MS),
+        .adv_interval      = MSEC_TO_UNITS(100, UNIT_0_625_MS),
+        .min_conn_interval = MSEC_TO_UNITS(100, UNIT_1_25_MS),
+        .max_conn_interval = MSEC_TO_UNITS(200, UNIT_1_25_MS),
 };
 
 simple_ble_app_t* simple_ble_app;
@@ -70,7 +67,8 @@ static simple_ble_service_t main_service = {{
 
 // 60267643-592e-11ec-bf63-0242ac130002
 static simple_ble_char_t rx_char = {.uuid16 = 0x7643};
-static uint32_t rx_value;
+static char rx_value[64];
+//static uint32_t rx_value;
 
 // 60267644-592e-11ec-bf63-0242ac130002
 static simple_ble_char_t tx_char = {.uuid16 = 0x7644};
@@ -78,7 +76,7 @@ static uint32_t tx_value;
 
 void ble_evt_write(ble_evt_t const* p_ble_evt) {
   if (simple_ble_is_char_event(p_ble_evt, &rx_char)) {
-    tx_value = rx_value * 2;
+    tx_value = 1;
   }
 }
 
@@ -239,13 +237,15 @@ void corapp_init()
 	// Init virtual timer library
 	virtual_timer_init();
 
-	nrf_gpio_cfg_output(BUCKLER_LED0);
+	//nrf_gpio_cfg_output(BUCKLER_LED0);
 
   	nrf_delay_ms(1);
 
 	char buf[16];
 	sprintf(buf, "device id %x:%x", ble_config.device_id >> 8, ble_config.device_id & 0xFF);
 	display_write(buf, DISPLAY_LINE_0);
+
+	tx_value = 0;
 
 
 
@@ -256,7 +256,7 @@ void corapp_init()
 	simple_ble_add_service(&main_service);
 	sprintf(buf, "3 %x:%x", ble_config.device_id >> 8, ble_config.device_id & 0xFF);
 	display_write(buf, DISPLAY_LINE_0);
-	simple_ble_add_characteristic(1, 1, 0, 0, sizeof(rx_value), (uint8_t*)&rx_value, &main_service, &rx_char);
+	simple_ble_add_characteristic(1, 1, 0, 0, sizeof(rx_value), (char*)&rx_value, &main_service, &rx_char);
 	simple_ble_add_characteristic(1, 1, 0, 0, sizeof(tx_value), (uint8_t*)&tx_value, &main_service, &tx_char);
 
 	nrf_delay_ms(50);
@@ -267,23 +267,31 @@ void corapp_init()
 	sprintf(buf, "4 %x:%x", ble_config.device_id >> 8, ble_config.device_id & 0xFF);
 	printf("4");
 	display_write(buf, DISPLAY_LINE_0);
-	while(1) {
+	while(tx_value != 1) {
 		power_manage();
 	}
+	nrf_delay_ms(2000);
+	printf(rx_value);
+	//handle_ble_state_change();
+	advertising_stop();
 
+	nrf_delay_ms(2000);
 	sprintf(buf, "5 %x:%x", ble_config.device_id >> 8, ble_config.device_id & 0xFF);
 	printf("5");
 	display_write(buf, DISPLAY_LINE_0);
 	// Init BLE
-	simple_ble_app = simple_ble_init(&ble_config);
+	//simple_ble_app = simple_ble_init(&ble_config);
 	ble_comm_state = 0; // start in broadcast mode
 	// start switch timer
 	uint32_t ble_comm_interval = get_random_comm_interval(BLE_COMM_INT_L, BLE_COMM_INT_H);
 	ble_timer_h = virtual_timer_start(ble_comm_interval, &ble_switch_state_evt);
 	for(int i = 0; i < BLE_BUFF_SIZE; i++)
 		ble_tx_buffer[i] = 0;
+	printf("9");
 	simple_ble_adv_manuf_data(ble_tx_buffer, BLE_BUFF_SIZE);
-
+	sprintf(buf, "6 %x:%x", ble_config.device_id >> 8, ble_config.device_id & 0xFF);
+	printf("6");
+	display_write(buf, DISPLAY_LINE_0);
 	// initialize LSM9DS1 driver
 	lsm9ds1_init(&twi_mngr_instance);
 	printf("lsm9ds1 initialized\n");
