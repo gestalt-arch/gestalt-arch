@@ -62,8 +62,10 @@ unsigned int GestaltSolver::solve_pathstream(PathStreamSolution* path_stream_sol
     while (bot_idx < initial_state->num_bots)
     {
         int cur_bot_id = initial_state->bot_ids[bot_idx];
-        for (int i = 0; i < dist_node_array.size(); i++) {
-            if (dist_node_array[i]->bot_id == cur_bot_id) {
+        for (int i = 0; i < dist_node_array.size(); i++)
+        {
+            if (dist_node_array[i]->bot_id == cur_bot_id) //constraint cube id
+            {
                 objective_array.push_back(dist_node_array[i]);
                 bot_idx++;
                 break;

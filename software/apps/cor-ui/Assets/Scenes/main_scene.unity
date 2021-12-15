@@ -3237,7 +3237,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 1671368865}
-        m_TargetAssemblyTypeName: SerialConnection, Assembly-CSharp
+        m_TargetAssemblyTypeName: ControlButtons, Assembly-CSharp
         m_MethodName: Upload
         m_Mode: 1
         m_Arguments:
@@ -3295,9 +3295,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 1671368860}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fbcc0970dfa40194fab7c1b980af7d56, type: 3}
+  m_Script: {fileID: 11500000, guid: ef83d28bc0f8542408179543eda145d6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  cube1: {fileID: 1325189675}
+  cube2: {fileID: 535337764}
+  cube3: {fileID: 19102652}
+  kobuki1: {fileID: 1468105280}
+  kobuki2: {fileID: 497512421}
+  kobuki3: {fileID: 993614295}
 --- !u!1 &1724340892
 GameObject:
   m_ObjectHideFlags: 0

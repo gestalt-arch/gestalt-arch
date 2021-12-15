@@ -11,13 +11,12 @@
 #if defined(_WIN32) || defined(_WIN64) || defined(_WINDOWS)
 #define GESTALT_WINDOWS
 #endif
-#if defined(__linux__) || defined( __unix__)
+#if defined(__linux__) || defined(__unix__)
 #define GESTALT_LINUX
 #endif
-#if defined(__APPLE__) || defined( __OSX__)
+#if defined(__APPLE__) || defined(__OSX__)
 #define GESTALT_APPLE
 #endif
-
 
 #ifdef GESTALT_LINUX
 #define DLLEXPORT
@@ -26,20 +25,21 @@
 #define DLLEXPORT
 #endif
 #ifdef GESTALT_WINDOWS
-#define DLLEXPORT	__declspec(dllimport)
+#define DLLEXPORT __declspec(dllimport)
 #endif
 ///////////////////////////////////////////////////////////////////////////////////
 
 #define STATE_GRAPH_DIM 16 // Determines the dimension (M) of the state graph (M x M)
-#define MAX_BOTS 4
-#define MAX_OBJECTS 4
+#define MAX_BOTS 3
+#define MAX_OBJECTS 3
 
 #define MAX_SOLUTION_LENGTH 64
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
-    class DLLEXPORT GestaltSolver 
+    class DLLEXPORT GestaltSolver
     {
 
     public:
@@ -57,10 +57,9 @@ extern "C" {
         /* A complete path_stream solution, containing all path_streams for all bots in the environment */
         struct PathStreamSolution
         {
-            PathStream* path_stream_vector[MAX_BOTS];
+            PathStream path_stream_vector[MAX_BOTS];
             unsigned int num_path_streams;
         };
-
 
         struct StateVector
         {
@@ -73,7 +72,6 @@ extern "C" {
             int obj_ids[MAX_OBJECTS];
             int num_objs;
         };
-
 
         struct SolutionConfig
         {
@@ -93,33 +91,32 @@ extern "C" {
         *  - Populates path_stream_solution struct as OUTPUT
         *  - Takes inital_state and final_state vectors as INPUT
         */
-        static unsigned int solve_pathstream(PathStreamSolution* path_stream_solution, StateVector* initial_state, StateVector* final_state, SolutionConfig* solution_config);
+        static unsigned int solve_pathstream(PathStreamSolution *path_stream_solution, StateVector *initial_state, StateVector *final_state, SolutionConfig *solution_config);
 
     private:
-
-        struct Vector2 {
+        struct Vector2
+        {
             float x_pos, y_pos;
         };
 
-        class AStarGraph {
-            public:
-                
-                struct AStarNode {
-                    Vector2 loc;
-                    bool occupied;
-                    std::vector<AStarNode> neighbors;
-                };
+        class AStarGraph
+        {
+        public:
+            struct AStarNode
+            {
+                Vector2 loc;
+                bool occupied;
+                std::vector<AStarNode> neighbors;
+            };
 
-                AStarGraph(int graph_dim, float env_size, float bot_size, float obj_size);
+            AStarGraph(int graph_dim, float env_size, float bot_size, float obj_size);
 
-                
-                std::vector<Vector2> solve(Vector2 start_pos, Vector2 end_pos);
+            std::vector<Vector2> solve(Vector2 start_pos, Vector2 end_pos);
 
-            private:
-                float bot_size;
-                float obj_size;
-                std::unordered_map<Vector2, AStarNode> pos_node_map;
-
+        private:
+            float bot_size;
+            float obj_size;
+            std::unordered_map<Vector2, AStarNode> pos_node_map;
         };
 
         struct DistNode
@@ -129,8 +126,7 @@ extern "C" {
             float dist;
         };
 
-        static std::vector<std::shared_ptr<DistNode> > gen_dist_nodes(StateVector* initial_state);
-
+        static std::vector<std::shared_ptr<DistNode>> gen_dist_nodes(StateVector *initial_state);
     };
 
 #ifdef __cplusplus

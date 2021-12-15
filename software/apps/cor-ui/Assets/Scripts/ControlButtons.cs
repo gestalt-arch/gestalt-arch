@@ -7,6 +7,7 @@ using System.Linq;
 public class ControlButtons : MonoBehaviour
 {
     public static int NUMBOTS = 3;
+    public static GestaltSolver.PathStreamSolution solution;
     private static Vector3[] cubePosIni = new Vector3[NUMBOTS];
     private static Vector3[] cubePosFin = new Vector3[NUMBOTS];
     private static Vector3[] kobukiPos = new Vector3[NUMBOTS];
@@ -42,22 +43,15 @@ public class ControlButtons : MonoBehaviour
         kobukiPos[1] = kobuki2.transform.position;
         kobukiPos[2] = kobuki3.transform.position;
 
-        List<GestaltSolver.DistNode> solution = GestaltSolver.SolvePathstream(NUMBOTS, cubePosIni, cubePosFin, kobukiPos);
-        GestaltSolver.SaveSolution("solution.txt", solution);
-
-
+        // generate solution based on current positional statuses
+        solution = GestaltSolver.SolvePathstream(NUMBOTS, cubePosIni, cubePosFin, kobukiPos);
     }
 
     public void Upload()
     {
-        //upload solution from cpp to kobuki with BLE
+        // save in text file then..
+        // upload solution from cpp to kobuki with BLE
+        GestaltSolver.SaveSolution("solution.txt", solution);
     }
-
-    private void SolvePath()
-    {
-
-    }
-
-
 
 }
