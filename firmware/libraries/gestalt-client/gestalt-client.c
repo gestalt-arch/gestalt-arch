@@ -1,12 +1,14 @@
 #include "gestalt-client.h"
+#include "string.h"
 #include "nrf.h"
 
 // The complete path stream solution
 static Gestalt_path_stream_sol_t ps_solution;
 
 // The path stream for this bot to follow
-// determined after
+// determined after gestalt_init and solution deserialization
 static Gestalt_path_stream_t target_ps;
+static uint8_t _this_id;
 
 // Contains all info regarding the current status of the robot
 static Gestalt_status_t curr_status;
@@ -27,6 +29,8 @@ static uint16_t prev_encoder_right;
 #define ANGLE_TICK_TO_DEG 0.00875
 #define BOT_WHEEL_RADIUS 35.f   // bot wheel radius (in mm)
 #define BOT_WHEEL_BASE 0.230f   // bot wheel base (in m)
+
+#define BOT_LOSS_TIMEOUT 5000000 // 5s timeout determines bot is lost
 
 float gestalt_get_2d_dist(float x1, float y1, float x2, float y2)
 {
@@ -74,9 +78,11 @@ inline static void update_errors()
 	float dist = gestalt_get_2d_dist(curr_status.curr_pos.x, curr_status.curr_pos.y,
 		curr_goal.curr_x_goal, curr_goal.curr_y_goal);
 	curr_status.pos_error = dist;
+
 	float theta_target = get_2d_theta(curr_status.curr_pos.x, curr_status.curr_pos.y,
 		curr_goal.curr_x_goal, curr_goal.curr_y_goal);
 	curr_status.theta_error = theta_target - curr_status.curr_theta;
+
 	if(curr_status.theta_error < -180.f)
 		curr_status.theta_error += 360.f;
 	else if(curr_status.theta_error > 180.f) 
@@ -222,6 +228,7 @@ void gestalt_init_test_path()
 // Provide the bot id
 void gestalt_init(uint8_t bot_id, KobukiSensors_t* kobuki_sensors) 
 {
+	_this_id = bot_id;
 	// timer for sensor integration
 	gestalt_timer_init(SENSOR_TIMER);
 	// timer for bot sync tracking
@@ -231,8 +238,8 @@ void gestalt_init(uint8_t bot_id, KobukiSensors_t* kobuki_sensors)
 
 	// find path assigned to this bot
 	// should probably search in the future
-	target_ps = ps_solution.path_stream_vector[bot_id-1];
-	printf("My BOT ID: %d", target_ps.bot_id);
+	target_ps = ps_solution.path_stream_vector[_this_id-1];
+	printf("My BOT ID: %d", _this_id);
 
 	// initialize current position/theta, ID, and progress
 	curr_status.curr_pos.x = target_ps.x_pos_stream[0];
@@ -310,6 +317,93 @@ void gestalt_update_sensor_data(KobukiSensors_t* kobuki_sensors)
 	gestalt_timer_reset(3);
 }
 
+// Append a lost bot's pathstream (whatever was left)
+static void append_bot_pathstream(uint8_t bot_id) {
+	// 1 - 2 3 4
+	// 5 6 - 7 8
+	// 1 - 2 7 3 4
+	uint16_t copy_length = ps_solution.path_stream_vector[bot_id-1].path_length - bot_status_list[bot_id-1].ps_progress - 1;
+	if(copy_length <= 0) 
+		return;
+	// x
+	// shift out of the way
+	uint8_t* dest = (target_ps.x_pos_stream + curr_status.ps_progress + 1 + copy_length);
+	uint8_t* src = target_ps.x_pos_stream + curr_status.ps_progress + 1;
+	uint32_t len = target_ps.path_length - curr_status - 1;
+	memcpy(dest, src, len);
+	// append
+	dest = target_ps.x_pos_stream + curr_status.ps_progress + 1;
+	src = ps_solution.path_stream_vector[bot_id-1].x_pos_stream + bot_status_list[bot_id-1].ps_progress;
+	memcpy(dest, src, copy_length);
+
+	// y
+	// shift out of the way
+	dest = (target_ps.y_pos_stream + curr_status.ps_progress + 1 + copy_length);
+	src = target_ps.y_pos_stream + curr_status.ps_progress + 1;
+	len = target_ps.path_length - curr_status - 1;
+	memcpy(dest, src, len);
+	// append
+	dest = target_ps.y_pos_stream + curr_status.ps_progress + 1;
+	src = ps_solution.path_stream_vector[bot_id-1].y_pos_stream + bot_status_list[bot_id-1].ps_progress;
+	memcpy(dest, src, copy_length);
+
+	// action
+	// shift out of the way
+	dest = (target_ps.action_stream + curr_status.ps_progress + 1 + copy_length);
+	src = target_ps.action_stream + curr_status.ps_progress + 1;
+	len = target_ps.path_length - curr_status - 1;
+	memcpy(dest, src, len);
+	// append
+	dest = target_ps.action_stream + curr_status.ps_progress + 1;
+	src = ps_solution.path_stream_vector[bot_id-1].action_stream + bot_status_list[bot_id-1].ps_progress;
+	memcpy(dest, src, copy_length);
+
+	// exclusion
+	// shift out of the way
+	dest = (target_ps.exclusion_stream + curr_status.ps_progress + 1 + copy_length);
+	src = target_ps.exclusion_stream + curr_status.ps_progress + 1;
+	len = target_ps.path_length - curr_status - 1;
+	memcpy(dest, src, len);
+	// append
+	dest = target_ps.exclusion_stream + curr_status.ps_progress + 1;
+	src = ps_solution.path_stream_vector[bot_id-1].exclusion_stream + bot_status_list[bot_id-1].ps_progress;
+	memcpy(dest, src, copy_length);
+}
+
+void gestalt_update_bot_status()
+{
+	for(int i = 0; i < MAX_BOTS; i++) 
+	{
+		float tx_time_elapsed = (gestalt_timer_read(COMM_TIMER) - bot_status_list[i].last_sync_time);
+
+		if((i+1) != _this_id && bot_status_list[i].valid &&  tx_time_elapsed < BOT_LOSS_TIMEOUT ) {
+			// mark no long valid
+			bot_status_list[i].valid = 0;
+
+			// Take over the path stream?
+			int8_t min = 127;
+			uint8_t minIdx = 1;
+
+			for(int i = 0; i < MAX_BOTS; i++) {
+				if(bot_status_list[i].valid || i == (_this_id - 1)){
+					// e.g. 1 takes over 2 instead of 3
+					// 2 takes over 1 instead of 3
+					int8_t diff = _this_id - bot_status_list[i].bot_id;
+					if(diff < min) {
+						min = diff;
+						minIdx = (i+1);
+					}
+				}
+			}
+			// Am I optimal choice to take over path stream?
+			if(minIdx == _this_id) {
+				append_bot_pathstream(bot_status_list[i].bot_id);
+			}
+		}
+	}
+}
+
+
 // Inform gestalt client that the active goal is complete
 void gestalt_send_goal_complete()
 {
@@ -326,6 +420,7 @@ void gestalt_send_goal_complete()
 	curr_goal.curr_y_goal = target_ps.y_pos_stream[i];
 	curr_goal.curr_action_goal = target_ps.action_stream[i];
 
+	// forced_goal is now complete
 	forced_goal = false;
 
 	//printf("Goal pos: %1.2f, %1.2f\n", curr_goal.curr_x_goal, curr_goal.curr_y_goal);
@@ -407,7 +502,7 @@ uint32_t gestalt_timer_read(uint8_t timer_number)
 // BLE broadcast packet definition
 void gestalt_prep_ble_buffer(uint8_t* buffer)
 {
-	buffer[0] = target_ps.bot_id;
+	buffer[0] = _this_id;
 	int32_t x = (int32_t)(curr_status.curr_pos.x * 10000.f);
 	int32_t y = (int32_t)(curr_status.curr_pos.y * 10000.f);
 	int32_t t = (int32_t)(curr_status.curr_theta * 10000.f);

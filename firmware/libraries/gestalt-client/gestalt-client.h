@@ -58,10 +58,10 @@ typedef struct {
 typedef struct {
     uint8_t path_length;
     uint8_t bot_id;
-    float x_pos_stream[MAX_SOLUTION_LENGTH];
-    float y_pos_stream[MAX_SOLUTION_LENGTH];
-    int32_t action_stream[MAX_SOLUTION_LENGTH];
-    int32_t exclusion_stream[MAX_SOLUTION_LENGTH];
+    float x_pos_stream[MAX_SOLUTION_LENGTH * MAX_BOTS]; 
+    float y_pos_stream[MAX_SOLUTION_LENGTH * MAX_BOTS];
+    int32_t action_stream[MAX_SOLUTION_LENGTH * MAX_BOTS];
+    int32_t exclusion_stream[MAX_SOLUTION_LENGTH * MAX_BOTS];
 } Gestalt_path_stream_t;
 
 typedef struct {
@@ -91,6 +91,11 @@ void gestalt_update_sensor_data(KobukiSensors_t* kobuki_sensors);
 
 // Inform gestalt client that the active goal is complete
 void gestalt_send_goal_complete();
+
+// Check bot status for expiry/loss
+// If loss detected and fault-tolerance condition met,
+// the lost bot's path stream will be appended to the current path stream
+void gestalt_update_bot_status();
 
 // Force gestalt to provide pathing for a user-specified goal
 void gestalt_force_goal(const Gestalt_goal_t* goal);

@@ -187,7 +187,7 @@ int8_t corapp_check_bot_collisions(Gestalt_vector2_t curr_pos, Gestalt_bot_statu
 {
 	for(int i = 0; i < MAX_BOTS; i++)
 	{
-		if((i+1) != GESTALT_BOT_ID  && b_list[i].valid && (gestalt_timer_read(COMM_TIMER) - b_list[i].last_sync_time) < BOT_SYNC_TIMEOUT){
+		if((i+1) != GESTALT_BOT_ID  && b_list[i].valid){
 			float dist = gestalt_get_2d_dist(curr_pos.x, curr_pos.y, b_list[i].x, b_list[i].y);
 			if(dist < COLLISION_THRESHOLD)
 				return b_list[i].bot_id;
@@ -270,6 +270,11 @@ void corapp_run()
 	//display_write(disp_buffer, DISPLAY_LINE_0);
 
     action = gestalt_get_current_action();
+
+	// Check bot status for expiry/loss
+	// If loss detected and fault-tolerance condition met,
+	// the lost bot's path stream will be appended to the current path stream
+	gestalt_update_bot_status();
 
 	// test current state
 	switch (state) {
