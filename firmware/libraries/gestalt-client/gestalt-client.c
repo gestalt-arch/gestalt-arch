@@ -13,6 +13,7 @@ static Gestalt_status_t curr_status;
 
 // Contains the goal position and action of the bot
 static Gestalt_goal_t curr_goal;
+static bool forced_goal = false;
 
 // Keep track of other bots
 // Updated by BLE communication
@@ -30,6 +31,15 @@ static uint16_t prev_encoder_right;
 float gestalt_get_2d_dist(float x1, float y1, float x2, float y2)
 {
 	return sqrtf(powf(x2-x1, 2) + powf(y2-y1, 2));
+}
+
+// Returns the provided vector translated by a distance in direction theta
+void gestalt_transform_vector(Gestalt_vector2_t* vec, float dist, float theta)
+{
+	float theta_rad = theta * (M_PI / 180.f);
+	// tokyo drift
+	vec->x += dist * sinf(theta_rad);
+	vec->y += dist * cosf(theta_rad);
 }
 
 inline static float get_2d_theta(float x1, float y1, float x2, float y2)
@@ -57,14 +67,6 @@ static float get_encoder_rotation(float left_dist, float right_dist)
 	else {
 		return 360.f*(((left_dist - right_dist) / (BOT_WHEEL_BASE * M_PI)));
 	}
-}
-
-inline static void update_curr_pos(float dist, float theta) 
-{
-	float theta_rad = theta * (M_PI / 180.f);
-	// tokyo drift
-	curr_status.curr_pos.x += dist * sinf(theta_rad);
-	curr_status.curr_pos.y += dist * cosf(theta_rad); 
 }
 
 inline static void update_errors()
@@ -190,7 +192,7 @@ void gestalt_init_test_path()
 	ps_solution.path_stream_vector[2].bot_id = 3;
 	ps_solution.path_stream_vector[2].path_length = 4;
 	
-	ps_solution.path_stream_vector[2].x_pos_stream[0] = 0.0f;
+	ps_solution.path_stream_vector[2].x_pos_stream[0] = 0.5f;
 	ps_solution.path_stream_vector[2].y_pos_stream[0] = 0.0f;
 	ps_solution.path_stream_vector[2].action_stream[0] = GESTALT_MOVE;
 
@@ -291,7 +293,7 @@ void gestalt_update_sensor_data(KobukiSensors_t* kobuki_sensors)
 	curr_status.curr_theta += theta;
 	curr_status.curr_theta = fmod(curr_status.curr_theta, 360.f);
 
-	update_curr_pos(dist, curr_status.curr_theta);
+	gestalt_transform_vector(&curr_status.curr_pos, dist, curr_status.curr_theta);
 
 	//printf("left dist: %1.4f\tright dist: %1.4f\n", dist_left, dist_right);
 	//printf("enc theta: %1.4f\tgyro theta: %1.4f\n", encoder_theta, gyro_theta);
@@ -303,11 +305,12 @@ void gestalt_update_sensor_data(KobukiSensors_t* kobuki_sensors)
 // Inform gestalt client that the active goal is complete
 void gestalt_send_goal_complete()
 {
-	// increment ps progress
-	if(curr_status.ps_progress != target_ps.path_length)
-		curr_status.ps_progress += 1;
-
-	
+	if(!forced_goal)
+	{
+		// increment ps progress
+		if(curr_status.ps_progress != target_ps.path_length)
+			curr_status.ps_progress += 1;	
+	}
 	// update goals
 	uint8_t ps_prog = curr_status.ps_progress;
 	curr_goal.curr_x_goal = target_ps.x_pos_stream[ps_prog + 1];
@@ -318,11 +321,17 @@ void gestalt_send_goal_complete()
 	update_errors();
 }
 
+void gestalt_force_goal(const Gestalt_goal_t* goal)
+{
+	forced_goal = true;
+	curr_goal = *goal;
+	update_errors();
+}
+
 // Returns the current action
 Gestalt_action_t gestalt_get_current_action()
 {
 	return curr_goal.curr_action_goal;
-	//return GESTALT_MOVE;
 }
 
 // Returns the current status struct with all information for FSM and connectivity

@@ -38,8 +38,14 @@ typedef enum {
   DRIVE,
   ALIGN_CW,
   ALIGN_CCW,
-  STOP_COLLISION,
+  FORCE_STOP,
+  FORCE_REVERSE
 } KobukiState_t;
+
+typedef enum {
+  KOBUKI_BUMP,
+  KOBUKI_GESTALT
+} KobukiStopType_t;
 
 
 int8_t corapp_check_bot_collisions(Gestalt_vector2_t curr_pos, Gestalt_bot_status_t* b_list);

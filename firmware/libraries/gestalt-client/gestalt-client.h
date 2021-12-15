@@ -69,6 +69,9 @@ typedef struct {
 // Get the distance between two coordinates
 float gestalt_get_2d_dist(float x1, float y1, float x2, float y2);
 
+// Returns the provided vector translated by a distance in direction theta
+void gestalt_transform_vector(Gestalt_vector2_t* vec, float dist, float theta);
+
 // After completing the serial read, deserialize the buffer into a Gestalt_path_stream_sol_t
 void gestalt_deserialize_solution(uint8_t* solution_buffer, uint16_t solution_num_bytes);
 
@@ -84,6 +87,9 @@ void gestalt_update_sensor_data(KobukiSensors_t* kobuki_sensors);
 
 // Inform gestalt client that the active goal is complete
 void gestalt_send_goal_complete();
+
+// Force gestalt to provide pathing for a user-specified goal
+void gestalt_force_goal(const Gestalt_goal_t* goal);
 
 // Returns the current action
 Gestalt_action_t gestalt_get_current_action();
