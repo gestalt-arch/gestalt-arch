@@ -29,17 +29,26 @@
 
 #include "virtual_timer.h"
 
-#define GESTALT_BOT_ID 1
-#define BOT_BLE_ID 0xF0C1 // Set LSB = GESTALT_BOT_ID
-#define BOT_BLE_NAME "GS 1" // Set name to "GS [BOT_ID]"
+#define GESTALT_BOT_ID 3
+#define BOT_BLE_ID 0xF0C3 // Set LSB = GESTALT_BOT_ID
+#define BOT_BLE_NAME "GS 3" // Set name to "GS [BOT_ID]"
 
 typedef enum {
   STOP,
   DRIVE,
   ALIGN_CW,
-  ALIGN_CCW
+  ALIGN_CCW,
+  FORCE_STOP,
+  FORCE_REVERSE
 } KobukiState_t;
 
+typedef enum {
+  KOBUKI_BUMP,
+  KOBUKI_GESTALT
+} KobukiStopType_t;
+
+
+int8_t corapp_check_bot_collisions(Gestalt_vector2_t curr_pos, Gestalt_bot_status_t* b_list);
 
 void corapp_init();
 

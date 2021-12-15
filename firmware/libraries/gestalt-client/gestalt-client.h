@@ -6,6 +6,9 @@
 #define MAX_SOLUTION_LENGTH 8
 #define MAX_BOTS 3
 
+#define SENSOR_TIMER 3
+#define COMM_TIMER 2
+
 typedef enum {
     GESTALT_MOVE,
     GESTALT_GRAB,
@@ -48,6 +51,8 @@ typedef struct {
     float y;
     float theta;
     int8_t ps_progress;
+    bool valid;
+    uint32_t last_sync_time;
 } Gestalt_bot_status_t;
 
 typedef struct {
@@ -63,6 +68,13 @@ typedef struct {
     uint8_t num_path_streams;
     Gestalt_path_stream_t path_stream_vector[MAX_BOTS];
 } Gestalt_path_stream_sol_t;
+
+
+// Get the distance between two coordinates
+float gestalt_get_2d_dist(float x1, float y1, float x2, float y2);
+
+// Returns the provided vector translated by a distance in direction theta
+void gestalt_transform_vector(Gestalt_vector2_t* vec, float dist, float theta);
 
 // After completing the serial read, deserialize the buffer into a Gestalt_path_stream_sol_t
 void gestalt_deserialize_solution(uint8_t* solution_buffer, uint16_t solution_num_bytes);
@@ -80,6 +92,9 @@ void gestalt_update_sensor_data(KobukiSensors_t* kobuki_sensors);
 // Inform gestalt client that the active goal is complete
 void gestalt_send_goal_complete();
 
+// Force gestalt to provide pathing for a user-specified goal
+void gestalt_force_goal(const Gestalt_goal_t* goal);
+
 // Returns the current action
 Gestalt_action_t gestalt_get_current_action();
 
@@ -90,14 +105,17 @@ Gestalt_status_t* gestalt_get_current_status();
 Gestalt_vector2_t gestalt_get_lcl_ref_pos();
 
 // Initialize timer
-void gestalt_timer_init();
+// pass either SENSOR_TIMER or COMM_TIMER
+void gestalt_timer_init(uint8_t timer_number);
 
 // Reset the timer back to 0
-void gestalt_timer_reset();
+// pass either SENSOR_TIMER or COMM_TIMER
+void gestalt_timer_reset(uint8_t timer_number);
 
 // Get the current time passed since the last gestalt_timer_start
 // Returns the time in microseconds
-int32_t gestalt_timer_read();
+// pass either SENSOR_TIMER or COMM_TIMER
+uint32_t gestalt_timer_read(uint8_t timer_number);
 
 // Fill the BLE buffer with all info according to the
 // BLE broadcast packet definition
@@ -105,4 +123,8 @@ void gestalt_prep_ble_buffer(uint8_t* buffer);
 
 // Parse the BLE buffer and populate corresponding records of other bot status
 // Adheres to the BLE broadcast packet definition
-void gestalt_parse_ble_buffer(uint8_t* buffer);
+void gestalt_parse_ble_buffer(uint8_t* buffer, uint8_t len);
+
+// Get pointer to the status of other bots
+Gestalt_bot_status_t* gestalt_get_status_list(void);
+

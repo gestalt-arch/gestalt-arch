@@ -13,6 +13,7 @@ static Gestalt_status_t curr_status;
 
 // Contains the goal position and action of the bot
 static Gestalt_goal_t curr_goal;
+static bool forced_goal = false;
 
 // Keep track of other bots
 // Updated by BLE communication
@@ -27,9 +28,18 @@ static uint16_t prev_encoder_right;
 #define BOT_WHEEL_RADIUS 35.f   // bot wheel radius (in mm)
 #define BOT_WHEEL_BASE 0.230f   // bot wheel base (in m)
 
-inline static float get_2d_dist(float x1, float y1, float x2, float y2)
+float gestalt_get_2d_dist(float x1, float y1, float x2, float y2)
 {
 	return sqrtf(powf(x2-x1, 2) + powf(y2-y1, 2));
+}
+
+// Returns the provided vector translated by a distance in direction theta
+void gestalt_transform_vector(Gestalt_vector2_t* vec, float dist, float theta)
+{
+	float theta_rad = theta * (M_PI / 180.f);
+	// tokyo drift
+	vec->x += dist * sinf(theta_rad);
+	vec->y += dist * cosf(theta_rad);
 }
 
 inline static float get_2d_theta(float x1, float y1, float x2, float y2)
@@ -59,22 +69,18 @@ static float get_encoder_rotation(float left_dist, float right_dist)
 	}
 }
 
-inline static void update_curr_pos(float dist, float theta) 
-{
-	float theta_rad = theta * (M_PI / 180.f);
-	// tokyo drift
-	curr_status.curr_pos.x += dist * sinf(theta_rad);
-	curr_status.curr_pos.y += dist * cosf(theta_rad); 
-}
-
 inline static void update_errors()
 {
-	float dist = get_2d_dist(curr_status.curr_pos.x, curr_status.curr_pos.y,
+	float dist = gestalt_get_2d_dist(curr_status.curr_pos.x, curr_status.curr_pos.y,
 		curr_goal.curr_x_goal, curr_goal.curr_y_goal);
 	curr_status.pos_error = dist;
 	float theta_target = get_2d_theta(curr_status.curr_pos.x, curr_status.curr_pos.y,
 		curr_goal.curr_x_goal, curr_goal.curr_y_goal);
 	curr_status.theta_error = theta_target - curr_status.curr_theta;
+	if(curr_status.theta_error < -180.f)
+		curr_status.theta_error += 360.f;
+	else if(curr_status.theta_error > 180.f) 
+		curr_status.theta_error += -360.f;
 }
 
 static void deserialize_path_stream(uint8_t* path_stream, uint32_t path_length, uint8_t ps_idx) 
@@ -154,12 +160,12 @@ void gestalt_init_test_path()
 	ps_solution.path_stream_vector[0].y_pos_stream[0] = 0.0f;
 	ps_solution.path_stream_vector[0].action_stream[0] = GESTALT_MOVE;
 
-	ps_solution.path_stream_vector[0].x_pos_stream[1] = -0.25f;
-	ps_solution.path_stream_vector[0].y_pos_stream[1] = 0.25f;
+	ps_solution.path_stream_vector[0].x_pos_stream[1] = 1.f;
+	ps_solution.path_stream_vector[0].y_pos_stream[1] = 1.f;
 	ps_solution.path_stream_vector[0].action_stream[1] = GESTALT_MOVE;
 
-	ps_solution.path_stream_vector[0].x_pos_stream[2] = 0.1f;
-	ps_solution.path_stream_vector[0].y_pos_stream[2] = -0.1f;
+	ps_solution.path_stream_vector[0].x_pos_stream[2] = 0.0f;
+	ps_solution.path_stream_vector[0].y_pos_stream[2] = 1.f;
 	ps_solution.path_stream_vector[0].action_stream[2] = GESTALT_MOVE;
 
 	ps_solution.path_stream_vector[0].x_pos_stream[3] = 0.0f;
@@ -190,19 +196,19 @@ void gestalt_init_test_path()
 	ps_solution.path_stream_vector[2].bot_id = 3;
 	ps_solution.path_stream_vector[2].path_length = 4;
 	
-	ps_solution.path_stream_vector[2].x_pos_stream[0] = 0.0f;
+	ps_solution.path_stream_vector[2].x_pos_stream[0] = 0.5f;
 	ps_solution.path_stream_vector[2].y_pos_stream[0] = 0.0f;
 	ps_solution.path_stream_vector[2].action_stream[0] = GESTALT_MOVE;
 
-	ps_solution.path_stream_vector[2].x_pos_stream[1] = -0.5f;
-	ps_solution.path_stream_vector[2].y_pos_stream[1] = 0.5f;
+	ps_solution.path_stream_vector[2].x_pos_stream[1] = 0.5f;
+	ps_solution.path_stream_vector[2].y_pos_stream[1] = 1.0f;
 	ps_solution.path_stream_vector[2].action_stream[1] = GESTALT_MOVE;
 
-	ps_solution.path_stream_vector[2].x_pos_stream[2] = 0.5f;
-	ps_solution.path_stream_vector[2].y_pos_stream[2] = -0.5f;
+	ps_solution.path_stream_vector[2].x_pos_stream[2] = 1.f;
+	ps_solution.path_stream_vector[2].y_pos_stream[2] = 1.f;
 	ps_solution.path_stream_vector[2].action_stream[2] = GESTALT_MOVE;
 
-	ps_solution.path_stream_vector[2].x_pos_stream[3] = 0.0f;
+	ps_solution.path_stream_vector[2].x_pos_stream[3] = 0.5f;
 	ps_solution.path_stream_vector[2].y_pos_stream[3] = 0.0f;
 	ps_solution.path_stream_vector[2].action_stream[3] = GESTALT_MOVE;
 
@@ -216,7 +222,10 @@ void gestalt_init_test_path()
 // Provide the bot id
 void gestalt_init(uint8_t bot_id, KobukiSensors_t* kobuki_sensors) 
 {
-	gestalt_timer_init();
+	// timer for sensor integration
+	gestalt_timer_init(SENSOR_TIMER);
+	// timer for bot sync tracking
+	gestalt_timer_init(COMM_TIMER);
 
 	gestalt_init_test_path(); // debug only
 
@@ -248,12 +257,14 @@ void gestalt_init(uint8_t bot_id, KobukiSensors_t* kobuki_sensors)
 		bot_status_list[i].y = 0.f;
 		bot_status_list[i].theta = 0.f;
 		bot_status_list[i].ps_progress = -1;
-		bot_status_list[i].bot_id = i;
+		bot_status_list[i].bot_id = i + 1;
+		bot_status_list[i].valid = 0;
 	}
 
 	update_errors();
 	gestalt_send_goal_complete();
-	gestalt_timer_reset();
+	gestalt_timer_reset(SENSOR_TIMER);
+	gestalt_timer_reset(COMM_TIMER);
 }
 
 // Update the sensor data and all internal state space representations
@@ -278,7 +289,7 @@ void gestalt_update_sensor_data(KobukiSensors_t* kobuki_sensors)
 
 	float angle_rate = ((float)(-1*kobuki_sensors->angleRate) * 0.00875f);
 	// Get cycle time passed (this function must be called once per main() while interation)
-	float delta_t = ((float)gestalt_timer_read() / 1000000.f);
+	float delta_t = ((float)gestalt_timer_read(3) / 1000000.f);
 	//printf("Time passed: %1.5f\n", delta_t);
 	
 	// attempt to integrate theta
@@ -290,30 +301,41 @@ void gestalt_update_sensor_data(KobukiSensors_t* kobuki_sensors)
 	curr_status.curr_theta += theta;
 	curr_status.curr_theta = fmod(curr_status.curr_theta, 360.f);
 
-	update_curr_pos(dist, curr_status.curr_theta);
+	gestalt_transform_vector(&curr_status.curr_pos, dist, curr_status.curr_theta);
 
 	//printf("left dist: %1.4f\tright dist: %1.4f\n", dist_left, dist_right);
 	//printf("enc theta: %1.4f\tgyro theta: %1.4f\n", encoder_theta, gyro_theta);
 
 	update_errors();
-	gestalt_timer_reset();
+	gestalt_timer_reset(3);
 }
 
 // Inform gestalt client that the active goal is complete
 void gestalt_send_goal_complete()
 {
-	// increment ps progress
-	if(curr_status.ps_progress != target_ps.path_length)
-		curr_status.ps_progress += 1;
-
-	
+	if(!forced_goal)
+	{
+		// increment ps progress
+		if(curr_status.ps_progress < target_ps.path_length - 1)
+			curr_status.ps_progress += 1;	
+	}
 	// update goals
 	uint8_t ps_prog = curr_status.ps_progress;
-	curr_goal.curr_x_goal = target_ps.x_pos_stream[ps_prog + 1];
-	curr_goal.curr_y_goal = target_ps.y_pos_stream[ps_prog + 1];
-	curr_goal.curr_action_goal = target_ps.action_stream[ps_prog + 1];
+	uint8_t i = (curr_status.ps_progress >= target_ps.path_length - 1) ? ps_prog : ps_prog + 1;
+	curr_goal.curr_x_goal = target_ps.x_pos_stream[i];
+	curr_goal.curr_y_goal = target_ps.y_pos_stream[i];
+	curr_goal.curr_action_goal = target_ps.action_stream[i];
+
+	forced_goal = false;
 
 	//printf("Goal pos: %1.2f, %1.2f\n", curr_goal.curr_x_goal, curr_goal.curr_y_goal);
+	update_errors();
+}
+
+void gestalt_force_goal(const Gestalt_goal_t* goal)
+{
+	forced_goal = true;
+	curr_goal = *goal;
 	update_errors();
 }
 
@@ -321,7 +343,6 @@ void gestalt_send_goal_complete()
 Gestalt_action_t gestalt_get_current_action()
 {
 	return curr_goal.curr_action_goal;
-	//return GESTALT_MOVE;
 }
 
 // Returns the current status struct with all information for FSM and connectivity
@@ -339,25 +360,47 @@ Gestalt_vector2_t gestalt_get_lcl_ref_pos()
 }
 
 // Initialize timer
-void gestalt_timer_init()
+void gestalt_timer_init(uint8_t timer_number)
 {
-	NRF_TIMER3->BITMODE |= 0x3;
-	NRF_TIMER3->PRESCALER |= 0x4;
+	if(timer_number == 2) {
+		NRF_TIMER2->BITMODE |= 0x3;
+		NRF_TIMER2->PRESCALER |= 0x4;
+	}
+	else if(timer_number == 3) {
+		NRF_TIMER3->BITMODE |= 0x3;
+		NRF_TIMER3->PRESCALER |= 0x4;
+	}
+	
 }
 
 // Reset the timer back to 0
-void gestalt_timer_reset()
+void gestalt_timer_reset(uint8_t timer_number)
 {
-	NRF_TIMER3->TASKS_CLEAR |= 0x1;
-  	NRF_TIMER3->TASKS_START |= 0x1;
+	if(timer_number == 2) {
+		NRF_TIMER2->TASKS_CLEAR |= 0x1;
+  		NRF_TIMER2->TASKS_START |= 0x1;
+	}
+	else if(timer_number == 3) {
+		NRF_TIMER3->TASKS_CLEAR |= 0x1;
+  		NRF_TIMER3->TASKS_START |= 0x1;
+	}
 }
 
 // Get the current time passed since the last gestalt_timer_start
 // Returns the time in microseconds
-int32_t gestalt_timer_read()
+uint32_t gestalt_timer_read(uint8_t timer_number)
 {
-	NRF_TIMER3->TASKS_CAPTURE[1] = 1;
-	return (uint32_t)NRF_TIMER3->CC[1];
+	if(timer_number == 2) {
+		NRF_TIMER2->TASKS_CAPTURE[1] = 1;
+		return (uint32_t)NRF_TIMER2->CC[1];
+	}
+	else if(timer_number == 3)
+	{
+		NRF_TIMER3->TASKS_CAPTURE[1] = 1;
+		return (uint32_t)NRF_TIMER3->CC[1];
+	}
+	return 0;
+	
 }
 
 // Fill the BLE buffer with all info according to the
@@ -392,36 +435,48 @@ void gestalt_prep_ble_buffer(uint8_t* buffer)
 
 	// path stream progress
 	buffer[13] = curr_status.ps_progress;
+	
 }
 
 // Parse the BLE buffer and populate corresponding records of other bot status
 // Adheres to the BLE broadcast packet definition
-void gestalt_parse_ble_buffer(uint8_t* buffer) 
+void gestalt_parse_ble_buffer(uint8_t* buffer, uint8_t len) 
 {
 	float tmp_f;
 	int32_t tmp_i;
-	uint8_t o_id = buffer[0];
-	bot_status_list[o_id].bot_id = o_id;
+	uint8_t o_id = buffer[7];
+	bot_status_list[o_id-1].bot_id = o_id;
 
 	// x-pos
-	tmp_i = ( buffer[1] << 24 | buffer[2] << 16 | buffer[3] << 8 | buffer[4] );
-	tmp_f = ((float)tmp_i) / 10000.f;
-	bot_status_list[o_id].x = tmp_f;
+	tmp_i = ( (int32_t)buffer[8] << 24 | (int32_t)buffer[9] << 16 | (int32_t)buffer[10] << 8 | (int32_t)buffer[11] );
+	tmp_f = (float)tmp_i;
+	tmp_f = tmp_f / 10000.f;
+	bot_status_list[o_id-1].x = tmp_f;
 
 	// y-pos
-	tmp_i = ( buffer[5] << 24 | buffer[6] << 16 | buffer[7] << 8 | buffer[8] );
+	tmp_i = ( (int32_t)buffer[12] << 24 | (int32_t)buffer[13] << 16 | (int32_t)buffer[14] << 8 | (int32_t)buffer[15] );
 	tmp_f = ((float)tmp_i) / 10000.f;
-	bot_status_list[o_id].y = tmp_f;
+	bot_status_list[o_id-1].y = tmp_f;
 
 	// theta
-	tmp_i = ( buffer[9] << 24 | buffer[10] << 16 | buffer[11] << 8 | buffer[12] );
+	tmp_i = ( (int32_t)buffer[16] << 24 | (int32_t)buffer[17] << 16 | (int32_t)buffer[18] << 8 | (int32_t)buffer[19] );
 	tmp_f = ((float)tmp_i) / 10000.f;
-	bot_status_list[o_id].theta = tmp_f;
+	bot_status_list[o_id-1].theta = tmp_f;
 
 	// path stream progress
-	bot_status_list[o_id].ps_progress = buffer[13];
+	bot_status_list[o_id-1].ps_progress = buffer[20];
+
+	// mark the status list entry as valid
+	bot_status_list[o_id-1].valid = 1;
+
+	bot_status_list[o_id-1].last_sync_time = gestalt_timer_read(COMM_TIMER);
 
 	//printf("%d %1.2f %1.2f\n", bot_status_list[o_id].bot_id, bot_status_list[o_id].x, bot_status_list[o_id].y);
 	//	bot_status_list[o_id].theta);
-	
+}
+
+// Get pointer to the status of other bots
+Gestalt_bot_status_t* gestalt_get_status_list(void)
+{
+	return bot_status_list;
 }
