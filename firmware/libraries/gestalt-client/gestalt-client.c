@@ -322,7 +322,7 @@ static void append_bot_pathstream(uint8_t bot_id) {
 	// 1 - 2 3 4
 	// 5 6 - 7 8
 	// 1 - 2 7 3 4
-	uint16_t copy_length = ps_solution.path_stream_vector[bot_id-1].path_length - bot_status_list[bot_id-1].ps_progress - 1;
+	int16_t copy_length = ps_solution.path_stream_vector[bot_id-1].path_length - bot_status_list[bot_id-1].ps_progress - 1;
 	if(copy_length <= 0) 
 		return;
 	// x
