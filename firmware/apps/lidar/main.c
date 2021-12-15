@@ -13,7 +13,7 @@
 #include "buckler.h"
 
 uint8_t buffer[90];
-uint8_t STATE = 0;
+uint8_t counter = 0;
 
 YdLidarData_t lidar_data;
 
@@ -51,6 +51,7 @@ static void ser_event_handler(nrf_serial_t const *p_serial, nrf_serial_event_t e
         }
         case NRF_SERIAL_EVENT_RX_DATA:
         {
+            counter++;
             size_t read;
             nrf_serial_read(&serial_uart, buffer, sizeof(buffer), &read, 0);
             if (buffer[2] == 0) {
@@ -79,16 +80,14 @@ void ser_rx_data(size_t size) {
     //}
     __disable_irq();
     get_lidar_data(buffer, &lidar_data);
-    /*
-    printf("Distances ");
-    for (int i = 0; i < 429; i++) {
-        printf("%f ", lidar_data.distance[i]);
-    }
-    */
 
-    printf("\nTheta ");
-    for (int i = 0; i < 429; i++) {
-        printf("%f ", lidar_data.theta[i]);
+    if (counter > 15) {
+        printf("Distances and Theta\n");
+        for (int i = 0; i < 429; i++) {
+            printf("%f\t%f", lidar_data.distance[i], lidar_data.theta[i]);
+        }
+
+        while(1);
     }
     
     __enable_irq();
