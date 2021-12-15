@@ -16,7 +16,7 @@ static Gestalt_goal_t curr_goal;
 
 // Keep track of other bots
 // Updated by BLE communication
-static Gestalt_bot_status_t bot_status_list[MAX_BOTS+1];
+static Gestalt_bot_status_t bot_status_list[MAX_BOTS];
 
 // Keep history of encoder values
 static uint16_t prev_encoder_left;
@@ -27,7 +27,7 @@ static uint16_t prev_encoder_right;
 #define BOT_WHEEL_RADIUS 35.f   // bot wheel radius (in mm)
 #define BOT_WHEEL_BASE 0.230f   // bot wheel base (in m)
 
-inline static float get_2d_dist(float x1, float y1, float x2, float y2)
+float gestalt_get_2d_dist(float x1, float y1, float x2, float y2)
 {
 	return sqrtf(powf(x2-x1, 2) + powf(y2-y1, 2));
 }
@@ -69,7 +69,7 @@ inline static void update_curr_pos(float dist, float theta)
 
 inline static void update_errors()
 {
-	float dist = get_2d_dist(curr_status.curr_pos.x, curr_status.curr_pos.y,
+	float dist = gestalt_get_2d_dist(curr_status.curr_pos.x, curr_status.curr_pos.y,
 		curr_goal.curr_x_goal, curr_goal.curr_y_goal);
 	curr_status.pos_error = dist;
 	float theta_target = get_2d_theta(curr_status.curr_pos.x, curr_status.curr_pos.y,
@@ -248,7 +248,8 @@ void gestalt_init(uint8_t bot_id, KobukiSensors_t* kobuki_sensors)
 		bot_status_list[i].y = 0.f;
 		bot_status_list[i].theta = 0.f;
 		bot_status_list[i].ps_progress = -1;
-		bot_status_list[i].bot_id = i;
+		bot_status_list[i].bot_id = i + 1;
+		bot_status_list[i].valid = 0;
 	}
 
 	update_errors();
@@ -370,7 +371,6 @@ void gestalt_prep_ble_buffer(uint8_t* buffer)
 	int32_t t = (int32_t)(curr_status.curr_theta * 10000.f);
 
 	// x-pos
-	printf("X-POS TX: %d\n", x);
 	buffer[1] = (uint8_t)(x >> 24);
 	buffer[2] = (uint8_t)(x >> 16);
 	buffer[3] = (uint8_t)(x >> 8);
@@ -403,30 +403,32 @@ void gestalt_parse_ble_buffer(uint8_t* buffer, uint8_t len)
 	float tmp_f;
 	int32_t tmp_i;
 	uint8_t o_id = buffer[7];
-	bot_status_list[o_id].bot_id = o_id;
+	bot_status_list[o_id-1].bot_id = o_id;
 
 	// x-pos
 	tmp_i = ( (int32_t)buffer[8] << 24 | (int32_t)buffer[9] << 16 | (int32_t)buffer[10] << 8 | (int32_t)buffer[11] );
 	tmp_f = (float)tmp_i;
 	tmp_f = tmp_f / 10000.f;
-	bot_status_list[o_id].x = tmp_f;
+	bot_status_list[o_id-1].x = tmp_f;
 
 	// y-pos
 	tmp_i = ( (int32_t)buffer[12] << 24 | (int32_t)buffer[13] << 16 | (int32_t)buffer[14] << 8 | (int32_t)buffer[15] );
 	tmp_f = ((float)tmp_i) / 10000.f;
-	bot_status_list[o_id].y = tmp_f;
+	bot_status_list[o_id-1].y = tmp_f;
 
 	// theta
 	tmp_i = ( (int32_t)buffer[16] << 24 | (int32_t)buffer[17] << 16 | (int32_t)buffer[18] << 8 | (int32_t)buffer[19] );
 	tmp_f = ((float)tmp_i) / 10000.f;
-	bot_status_list[o_id].theta = tmp_f;
+	bot_status_list[o_id-1].theta = tmp_f;
 
 	// path stream progress
-	bot_status_list[o_id].ps_progress = buffer[20];
+	bot_status_list[o_id-1].ps_progress = buffer[20];
+
+	// mark the status list entry as valid
+	bot_status_list[o_id-1].valid = 1;
 
 	//printf("%d %1.2f %1.2f\n", bot_status_list[o_id].bot_id, bot_status_list[o_id].x, bot_status_list[o_id].y);
 	//	bot_status_list[o_id].theta);
-	
 }
 
 // Get pointer to the status of other bots

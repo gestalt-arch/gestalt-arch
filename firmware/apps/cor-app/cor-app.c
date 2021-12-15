@@ -5,6 +5,8 @@
 #define DRIVE_SPEED 100
 #define TURN_SPEED 50
 #define ADJUST_SPEED 25
+#define COLLISION_THRESHOLD 0.5f
+#define STOP_COLLISION_TIMER 3000000
 
 // initialize state and state variables
 static KobukiState_t state = STOP;
@@ -24,9 +26,14 @@ uint8_t ble_tx_buffer[32];
 
 // BLE scan/adv state flag
 static int8_t ble_comm_state = 0;
-static uint32_t ble_timer_handle;
+static uint32_t ble_timer_h;
 static int8_t ble_state_change = 0;
 static int8_t ble_rx_pending = 0;
+
+// Collision prevention
+static uint32_t stop_collision_timer_h;
+static bool collision_timeout_flag = false;
+
 
 #define BLE_COMM_INT_L 200000  // lower bound comm interval (us)
 #define BLE_COMM_INT_H 1000000 // upper bound comm interval (us)
@@ -106,9 +113,9 @@ void ble_evt_adv_report(ble_evt_t const* p_ble_evt)
 		}
 }
 
-// ble_timer_handle virtual timer callback function
+// ble_timer_h virtual timer callback function
 // handles switching between ble comm states (adv and scan) 
-void ble_switch_state()
+void ble_switch_state_evt()
 {
 	if(ble_state_change != 1) {
 		ble_comm_state = (ble_comm_state == 1) ? 0 : 1;
@@ -118,12 +125,11 @@ void ble_switch_state()
 
 	// refresh comm interval timer
 	uint32_t ble_comm_interval = get_random_comm_interval(BLE_COMM_INT_L, BLE_COMM_INT_H);
-	ble_timer_handle = virtual_timer_start(ble_comm_interval, &ble_switch_state);
+	ble_timer_h = virtual_timer_start(ble_comm_interval, &ble_switch_state_evt);
 }
 
 void handle_ble_state_change()
 {
-	//__disable_irq();
 	printf("BLE> State change %d\n", ble_comm_state);
 	if(ble_comm_state == 1) {
 		// transition to scan state
@@ -136,7 +142,25 @@ void handle_ble_state_change()
 		printf("BLE> Scanning stopped\n");
 	}
 	ble_state_change = 0;
-	//__enable_irq();
+}
+
+void collision_timer_evt()
+{
+	collision_timeout_flag = true;
+}
+
+// Check collisions with other bots
+int8_t corapp_check_bot_collisions(Gestalt_vector2_t curr_pos, Gestalt_bot_status_t* b_list)
+{
+	for(int i = 0; i < MAX_BOTS; i++)
+	{
+		if((i+1) != GESTALT_BOT_ID  && b_list[i].valid){
+			float dist = gestalt_get_2d_dist(curr_pos.x, curr_pos.y, b_list[i].x, b_list[i].y);
+			if(dist < COLLISION_THRESHOLD)
+				return b_list[i].bot_id;
+		}
+	}
+	return -1;
 }
 
 void corapp_init()
@@ -164,7 +188,7 @@ void corapp_init()
 	ble_comm_state = 0; // start in broadcast mode
 	// start switch timer
 	uint32_t ble_comm_interval = get_random_comm_interval(BLE_COMM_INT_L, BLE_COMM_INT_H);
-	ble_timer_handle = virtual_timer_start(ble_comm_interval, &ble_switch_state);
+	ble_timer_h = virtual_timer_start(ble_comm_interval, &ble_switch_state_evt);
 	for(int i = 0; i < BLE_BUFF_SIZE; i++)
 		ble_tx_buffer[i] = 0;
 	simple_ble_adv_manuf_data(ble_tx_buffer, BLE_BUFF_SIZE);
@@ -206,8 +230,10 @@ void corapp_run()
 	}
 
 	Gestalt_bot_status_t* b_list = gestalt_get_status_list();
-	printf("pos (o): %1.2f, %1.2f", 
-		b_list[3].x, b_list[3].y);
+
+	int8_t collide_bot = corapp_check_bot_collisions(status->curr_pos, b_list);
+	//printf("pos (o): %1.2f, %1.2f", 
+	//	b_list[3].x, b_list[3].y);
 	//display_write(disp_buffer, DISPLAY_LINE_0);
 
 	//printf("curr_theta = %1.3f | cur_theta_error: %1.3f\n", status->curr_theta, cur_theta_error);
@@ -232,12 +258,19 @@ void corapp_run()
 			}
 			//	STOP
 			else {
-				//display_write("STOP", DISPLAY_LINE_0);
+				display_write("STOP", DISPLAY_LINE_0);
 				kobukiDriveDirect(0, 0);
 				gestalt_send_goal_complete();
 			}
 			break;
 		case DRIVE:
+			// DRIVE to STOP_COLLISION
+			if(collide_bot > -1) {
+				state = STOP_COLLISION;
+				kobukiDriveDirect(0,0);
+				stop_collision_timer_h = virtual_timer_start(STOP_COLLISION_TIMER, &collision_timer_evt);
+				collision_timeout_flag = false;
+			}
 			//	DRIVE to ALIGN_CW
 			if (cur_theta_error <= -3.f) {
 				state = ALIGN_CCW;
@@ -255,7 +288,7 @@ void corapp_run()
 				kobukiDriveDirect(0, 0);
 			}
 			else {
-				//display_write("DRIVE", DISPLAY_LINE_0);
+				display_write("DRIVE", DISPLAY_LINE_0);
 				kobukiDriveDirect(DRIVE_SPEED, DRIVE_SPEED);
 				sprintf(disp_buffer, "pos: %1.2f, %1.2f", 
 					status->curr_pos.x, status->curr_pos.y);
@@ -269,7 +302,7 @@ void corapp_run()
 			}
 			//	ALIGN_CW
 			else {
-				//display_write("ALIGN CW", DISPLAY_LINE_0);
+				display_write("ALIGN CW", DISPLAY_LINE_0);
 				kobukiDriveDirect(turn_speed, -turn_speed);
 				sprintf(disp_buffer, "%1.2f, %1.2f", status->curr_theta, cur_theta_error);
 				display_write(disp_buffer, DISPLAY_LINE_1);
@@ -282,12 +315,24 @@ void corapp_run()
 			}
 			// ALIGN_CCW to ALIGN_CCW
 			else {
-				//display_write("ALIGN CCW", DISPLAY_LINE_0);
+				display_write("ALIGN CCW", DISPLAY_LINE_0);
 				kobukiDriveDirect(-turn_speed, turn_speed);
 				sprintf(disp_buffer, "%1.2f, %1.2f", status->curr_theta, cur_theta_error);
 				display_write(disp_buffer, DISPLAY_LINE_1);
 			}
 			break;
+		case STOP_COLLISION:
+			if(collision_timeout_flag){
+				state = DRIVE;
+				kobukiDriveDirect(DRIVE_SPEED, DRIVE_SPEED);
+				collision_timeout_flag = false;
+			}
+			else {
+				display_write("STOP_COLLISION", DISPLAY_LINE_0);
+				kobukiDriveDirect(0, 0);
+			}
+			break;
+
 	}
 	// continue for 1 ms before checking state again
 }

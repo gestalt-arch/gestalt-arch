@@ -48,6 +48,7 @@ typedef struct {
     float y;
     float theta;
     int8_t ps_progress;
+    bool valid;
 } Gestalt_bot_status_t;
 
 typedef struct {
@@ -63,6 +64,10 @@ typedef struct {
     uint8_t num_path_streams;
     Gestalt_path_stream_t path_stream_vector[MAX_BOTS];
 } Gestalt_path_stream_sol_t;
+
+
+// Get the distance between two coordinates
+float gestalt_get_2d_dist(float x1, float y1, float x2, float y2);
 
 // After completing the serial read, deserialize the buffer into a Gestalt_path_stream_sol_t
 void gestalt_deserialize_solution(uint8_t* solution_buffer, uint16_t solution_num_bytes);
