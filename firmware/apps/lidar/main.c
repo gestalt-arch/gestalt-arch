@@ -87,7 +87,7 @@ void ser_rx_data(size_t size) {
     */
 
     printf("\nTheta ");
-    for (int i = 0; i < 429 * 2; i++) {
+    for (int i = 0; i < 429; i++) {
         printf("%f ", lidar_data.theta[i]);
     }
     
