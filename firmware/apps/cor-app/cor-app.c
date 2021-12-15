@@ -191,10 +191,10 @@ void corapp_init()
 
 	// Setup BLE
 	simple_ble_app = simple_ble_init(&ble_config);
-	sprintf(buf, "app config %x:%x", ble_config.device_id >> 8, ble_config.device_id & 0xFF);
+	sprintf(buf, "2 %x:%x", ble_config.device_id >> 8, ble_config.device_id & 0xFF);
 	display_write(buf, DISPLAY_LINE_0);
 	//simple_ble_add_service(&main_service);
-	sprintf(buf, "main service %x:%x", ble_config.device_id >> 8, ble_config.device_id & 0xFF);
+	sprintf(buf, "3 %x:%x", ble_config.device_id >> 8, ble_config.device_id & 0xFF);
 	display_write(buf, DISPLAY_LINE_0);
 	//simple_ble_add_characteristic(1, 1, 0, 0, sizeof(rx_value), (uint8_t*)&rx_value, &main_service, &rx_char);
 	//simple_ble_add_characteristic(1, 1, 0, 0, sizeof(tx_value), (uint8_t*)&tx_value, &main_service, &tx_char);
@@ -204,13 +204,13 @@ void corapp_init()
 	simple_ble_adv_only_name();
 
 
-	sprintf(buf, "advertising %x:%x", ble_config.device_id >> 8, ble_config.device_id & 0xFF);
+	sprintf(buf, "4 %x:%x", ble_config.device_id >> 8, ble_config.device_id & 0xFF);
 	display_write(buf, DISPLAY_LINE_0);
 	while(1) {
 		power_manage();
 	}
 
-	sprintf(buf, "power_manage %x:%x", ble_config.device_id >> 8, ble_config.device_id & 0xFF);
+	sprintf(buf, "5 %x:%x", ble_config.device_id >> 8, ble_config.device_id & 0xFF);
 	display_write(buf, DISPLAY_LINE_0);
 	// Init BLE
 	simple_ble_app = simple_ble_init(&ble_config);
