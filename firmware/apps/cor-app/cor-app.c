@@ -39,9 +39,12 @@ static simple_ble_config_t ble_config = {
         .platform_id       = 0x49,    // used as 4th octect in device BLE address
         .device_id         = BOT_BLE_ID, // TODO: replace with your lab bench number
         .adv_name          = BOT_BLE_NAME, // used in advertisements if there is room
-        .adv_interval      = MSEC_TO_UNITS(100, UNIT_0_625_MS),
-        .min_conn_interval = MSEC_TO_UNITS(100, UNIT_1_25_MS),
-        .max_conn_interval = MSEC_TO_UNITS(200, UNIT_1_25_MS),
+		.adv_interval      = MSEC_TO_UNITS(500, UNIT_0_625_MS),
+        .min_conn_interval = MSEC_TO_UNITS(50, UNIT_1_25_MS),
+        .max_conn_interval = MSEC_TO_UNITS(500, UNIT_1_25_MS),
+        //.adv_interval      = MSEC_TO_UNITS(100, UNIT_0_625_MS),
+        //.min_conn_interval = MSEC_TO_UNITS(100, UNIT_1_25_MS),
+        //.max_conn_interval = MSEC_TO_UNITS(200, UNIT_1_25_MS),
 };
 
 simple_ble_app_t* simple_ble_app;
@@ -205,12 +208,14 @@ void corapp_init()
 
 
 	sprintf(buf, "4 %x:%x", ble_config.device_id >> 8, ble_config.device_id & 0xFF);
+	printf("4")
 	display_write(buf, DISPLAY_LINE_0);
 	while(1) {
 		power_manage();
 	}
 
 	sprintf(buf, "5 %x:%x", ble_config.device_id >> 8, ble_config.device_id & 0xFF);
+	printf("5")
 	display_write(buf, DISPLAY_LINE_0);
 	// Init BLE
 	simple_ble_app = simple_ble_init(&ble_config);
