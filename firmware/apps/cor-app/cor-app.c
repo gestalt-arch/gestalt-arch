@@ -171,8 +171,8 @@ static void force_reverse_timer_evt()
 // a random (bounded) distance in that direction.
 static Gestalt_goal_t generate_avoid_goal(const Gestalt_vector2_t* curr_pos, float curr_theta)
 {
-	float dist = (float)((rand() % (400 - 100 + 1)) + 100) / 1000.f;
-	float theta = curr_theta + 60.f;
+	float dist = (float)((rand() % (300 - 100 + 1)) + 100) / 1000.f;
+	float theta = curr_theta + 45.f;
 	Gestalt_vector2_t new_pos = *curr_pos;
 	gestalt_transform_vector(&new_pos, dist, theta);
 
