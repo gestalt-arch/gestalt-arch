@@ -77,6 +77,10 @@ inline static void update_errors()
 	float theta_target = get_2d_theta(curr_status.curr_pos.x, curr_status.curr_pos.y,
 		curr_goal.curr_x_goal, curr_goal.curr_y_goal);
 	curr_status.theta_error = theta_target - curr_status.curr_theta;
+	if(curr_status.theta_error < -180.f)
+		curr_status.theta_error += 360.f;
+	else if(curr_status.theta_error > 180.f) 
+		curr_status.theta_error += -360.f;
 }
 
 static void deserialize_path_stream(uint8_t* path_stream, uint32_t path_length, uint8_t ps_idx) 
@@ -156,12 +160,12 @@ void gestalt_init_test_path()
 	ps_solution.path_stream_vector[0].y_pos_stream[0] = 0.0f;
 	ps_solution.path_stream_vector[0].action_stream[0] = GESTALT_MOVE;
 
-	ps_solution.path_stream_vector[0].x_pos_stream[1] = -0.25f;
-	ps_solution.path_stream_vector[0].y_pos_stream[1] = 0.25f;
+	ps_solution.path_stream_vector[0].x_pos_stream[1] = 1.f;
+	ps_solution.path_stream_vector[0].y_pos_stream[1] = 1.f;
 	ps_solution.path_stream_vector[0].action_stream[1] = GESTALT_MOVE;
 
-	ps_solution.path_stream_vector[0].x_pos_stream[2] = 0.1f;
-	ps_solution.path_stream_vector[0].y_pos_stream[2] = -0.1f;
+	ps_solution.path_stream_vector[0].x_pos_stream[2] = 0.0f;
+	ps_solution.path_stream_vector[0].y_pos_stream[2] = 1.f;
 	ps_solution.path_stream_vector[0].action_stream[2] = GESTALT_MOVE;
 
 	ps_solution.path_stream_vector[0].x_pos_stream[3] = 0.0f;
@@ -196,12 +200,12 @@ void gestalt_init_test_path()
 	ps_solution.path_stream_vector[2].y_pos_stream[0] = 0.0f;
 	ps_solution.path_stream_vector[2].action_stream[0] = GESTALT_MOVE;
 
-	ps_solution.path_stream_vector[2].x_pos_stream[1] = -0.5f;
-	ps_solution.path_stream_vector[2].y_pos_stream[1] = 0.5f;
+	ps_solution.path_stream_vector[2].x_pos_stream[1] = 0.5f;
+	ps_solution.path_stream_vector[2].y_pos_stream[1] = 1.0f;
 	ps_solution.path_stream_vector[2].action_stream[1] = GESTALT_MOVE;
 
-	ps_solution.path_stream_vector[2].x_pos_stream[2] = 0.5f;
-	ps_solution.path_stream_vector[2].y_pos_stream[2] = -0.5f;
+	ps_solution.path_stream_vector[2].x_pos_stream[2] = 1.f;
+	ps_solution.path_stream_vector[2].y_pos_stream[2] = 1.f;
 	ps_solution.path_stream_vector[2].action_stream[2] = GESTALT_MOVE;
 
 	ps_solution.path_stream_vector[2].x_pos_stream[3] = 0.5f;
@@ -218,7 +222,10 @@ void gestalt_init_test_path()
 // Provide the bot id
 void gestalt_init(uint8_t bot_id, KobukiSensors_t* kobuki_sensors) 
 {
-	gestalt_timer_init();
+	// timer for sensor integration
+	gestalt_timer_init(SENSOR_TIMER);
+	// timer for bot sync tracking
+	gestalt_timer_init(COMM_TIMER);
 
 	gestalt_init_test_path(); // debug only
 
@@ -256,7 +263,8 @@ void gestalt_init(uint8_t bot_id, KobukiSensors_t* kobuki_sensors)
 
 	update_errors();
 	gestalt_send_goal_complete();
-	gestalt_timer_reset();
+	gestalt_timer_reset(SENSOR_TIMER);
+	gestalt_timer_reset(COMM_TIMER);
 }
 
 // Update the sensor data and all internal state space representations
@@ -281,7 +289,7 @@ void gestalt_update_sensor_data(KobukiSensors_t* kobuki_sensors)
 
 	float angle_rate = ((float)(-1*kobuki_sensors->angleRate) * 0.00875f);
 	// Get cycle time passed (this function must be called once per main() while interation)
-	float delta_t = ((float)gestalt_timer_read() / 1000000.f);
+	float delta_t = ((float)gestalt_timer_read(3) / 1000000.f);
 	//printf("Time passed: %1.5f\n", delta_t);
 	
 	// attempt to integrate theta
@@ -299,7 +307,7 @@ void gestalt_update_sensor_data(KobukiSensors_t* kobuki_sensors)
 	//printf("enc theta: %1.4f\tgyro theta: %1.4f\n", encoder_theta, gyro_theta);
 
 	update_errors();
-	gestalt_timer_reset();
+	gestalt_timer_reset(3);
 }
 
 // Inform gestalt client that the active goal is complete
@@ -308,14 +316,15 @@ void gestalt_send_goal_complete()
 	if(!forced_goal)
 	{
 		// increment ps progress
-		if(curr_status.ps_progress != target_ps.path_length)
+		if(curr_status.ps_progress < target_ps.path_length - 1)
 			curr_status.ps_progress += 1;	
 	}
 	// update goals
 	uint8_t ps_prog = curr_status.ps_progress;
-	curr_goal.curr_x_goal = target_ps.x_pos_stream[ps_prog + 1];
-	curr_goal.curr_y_goal = target_ps.y_pos_stream[ps_prog + 1];
-	curr_goal.curr_action_goal = target_ps.action_stream[ps_prog + 1];
+	uint8_t i = (curr_status.ps_progress >= target_ps.path_length - 1) ? ps_prog : ps_prog + 1;
+	curr_goal.curr_x_goal = target_ps.x_pos_stream[i];
+	curr_goal.curr_y_goal = target_ps.y_pos_stream[i];
+	curr_goal.curr_action_goal = target_ps.action_stream[i];
 
 	forced_goal = false;
 
@@ -351,25 +360,47 @@ Gestalt_vector2_t gestalt_get_lcl_ref_pos()
 }
 
 // Initialize timer
-void gestalt_timer_init()
+void gestalt_timer_init(uint8_t timer_number)
 {
-	NRF_TIMER3->BITMODE |= 0x3;
-	NRF_TIMER3->PRESCALER |= 0x4;
+	if(timer_number == 2) {
+		NRF_TIMER2->BITMODE |= 0x3;
+		NRF_TIMER2->PRESCALER |= 0x4;
+	}
+	else if(timer_number == 3) {
+		NRF_TIMER3->BITMODE |= 0x3;
+		NRF_TIMER3->PRESCALER |= 0x4;
+	}
+	
 }
 
 // Reset the timer back to 0
-void gestalt_timer_reset()
+void gestalt_timer_reset(uint8_t timer_number)
 {
-	NRF_TIMER3->TASKS_CLEAR |= 0x1;
-  	NRF_TIMER3->TASKS_START |= 0x1;
+	if(timer_number == 2) {
+		NRF_TIMER2->TASKS_CLEAR |= 0x1;
+  		NRF_TIMER2->TASKS_START |= 0x1;
+	}
+	else if(timer_number == 3) {
+		NRF_TIMER3->TASKS_CLEAR |= 0x1;
+  		NRF_TIMER3->TASKS_START |= 0x1;
+	}
 }
 
 // Get the current time passed since the last gestalt_timer_start
 // Returns the time in microseconds
-int32_t gestalt_timer_read()
+uint32_t gestalt_timer_read(uint8_t timer_number)
 {
-	NRF_TIMER3->TASKS_CAPTURE[1] = 1;
-	return (uint32_t)NRF_TIMER3->CC[1];
+	if(timer_number == 2) {
+		NRF_TIMER2->TASKS_CAPTURE[1] = 1;
+		return (uint32_t)NRF_TIMER2->CC[1];
+	}
+	else if(timer_number == 3)
+	{
+		NRF_TIMER3->TASKS_CAPTURE[1] = 1;
+		return (uint32_t)NRF_TIMER3->CC[1];
+	}
+	return 0;
+	
 }
 
 // Fill the BLE buffer with all info according to the
@@ -437,6 +468,8 @@ void gestalt_parse_ble_buffer(uint8_t* buffer, uint8_t len)
 
 	// mark the status list entry as valid
 	bot_status_list[o_id-1].valid = 1;
+
+	bot_status_list[o_id-1].last_sync_time = gestalt_timer_read(COMM_TIMER);
 
 	//printf("%d %1.2f %1.2f\n", bot_status_list[o_id].bot_id, bot_status_list[o_id].x, bot_status_list[o_id].y);
 	//	bot_status_list[o_id].theta);

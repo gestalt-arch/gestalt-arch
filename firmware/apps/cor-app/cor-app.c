@@ -8,11 +8,11 @@
 #define COLLISION_THRESHOLD 0.4f
 #define FORCE_STOP_TIMER 500000
 #define FORCE_REVERSE_TIMER 3000000
+#define BOT_SYNC_TIMEOUT 5000000
 
 // initialize state and state variables
 static KobukiState_t state = STOP;
 static KobukiSensors_t sensors = { 0 };
-static uint8_t timer = 0;
 static Gestalt_status_t* status;
 static float cur_pos_error;
 static float cur_theta_error;
@@ -37,7 +37,6 @@ static bool force_stop_timeout_flag = false;
 static KobukiStopType_t force_stop_type = KOBUKI_BUMP;
 
 // Force reverse
-static uint32_t force_reverse_timer_h;
 static bool force_reverse_timeout_flag = false;
 
 
@@ -188,7 +187,7 @@ int8_t corapp_check_bot_collisions(Gestalt_vector2_t curr_pos, Gestalt_bot_statu
 {
 	for(int i = 0; i < MAX_BOTS; i++)
 	{
-		if((i+1) != GESTALT_BOT_ID  && b_list[i].valid){
+		if((i+1) != GESTALT_BOT_ID  && b_list[i].valid && (gestalt_timer_read(COMM_TIMER) - b_list[i].last_sync_time) < BOT_SYNC_TIMEOUT){
 			float dist = gestalt_get_2d_dist(curr_pos.x, curr_pos.y, b_list[i].x, b_list[i].y);
 			if(dist < COLLISION_THRESHOLD)
 				return b_list[i].bot_id;

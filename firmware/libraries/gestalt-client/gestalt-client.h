@@ -6,6 +6,9 @@
 #define MAX_SOLUTION_LENGTH 8
 #define MAX_BOTS 3
 
+#define SENSOR_TIMER 3
+#define COMM_TIMER 2
+
 typedef enum {
     GESTALT_MOVE,
     GESTALT_GRAB,
@@ -49,6 +52,7 @@ typedef struct {
     float theta;
     int8_t ps_progress;
     bool valid;
+    uint32_t last_sync_time;
 } Gestalt_bot_status_t;
 
 typedef struct {
@@ -101,14 +105,17 @@ Gestalt_status_t* gestalt_get_current_status();
 Gestalt_vector2_t gestalt_get_lcl_ref_pos();
 
 // Initialize timer
-void gestalt_timer_init();
+// pass either SENSOR_TIMER or COMM_TIMER
+void gestalt_timer_init(uint8_t timer_number);
 
 // Reset the timer back to 0
-void gestalt_timer_reset();
+// pass either SENSOR_TIMER or COMM_TIMER
+void gestalt_timer_reset(uint8_t timer_number);
 
 // Get the current time passed since the last gestalt_timer_start
 // Returns the time in microseconds
-int32_t gestalt_timer_read();
+// pass either SENSOR_TIMER or COMM_TIMER
+uint32_t gestalt_timer_read(uint8_t timer_number);
 
 // Fill the BLE buffer with all info according to the
 // BLE broadcast packet definition
