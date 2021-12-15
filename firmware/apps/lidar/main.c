@@ -1,7 +1,7 @@
 #include "../../buckler-ext/software/libraries/ydlidar_x2/ydlidar_x2.h"
-//#include "lidar_classification.h"
+#include "lidar_classification.h"
+#include "sort.h"
 
-#include <stdint.h>
 #include <stdio.h>
 
 #include "nrf_drv_clock.h"
@@ -15,7 +15,11 @@
 uint8_t buffer[90];
 uint8_t counter = 0;
 
+float sorted_theta[MAX_RESOLUTION];
+float sorted_distance[MAX_RESOLUTION];
+
 YdLidarData_t lidar_data;
+coordinate position;
 
 NRF_SERIAL_DRV_UART_CONFIG_DEF(m_uart0_drv_config,
                                BUCKLER_UART_RX, BUCKLER_UART_TX,
@@ -79,28 +83,25 @@ void ser_rx_data(size_t size) {
     //    printf("%x", buffer[i]);
     //}
     __disable_irq();
-    get_lidar_data(buffer, &lidar_data);
-
-    if (counter > 15) {
-        printf("Distances and Theta\n");
-        for (int i = 0; i < 429; i++) {
-            printf("%f\t%f", lidar_data.distance[i], lidar_data.theta[i]);
-        }
-
-        while(1);
-    }
-    
+    get_lidar_data(buffer, &lidar_data);    
     __enable_irq();
-
 }
 
-int main(void) {
-    ret_code_t error_code = NRF_SUCCESS;
+/*
+    SLAVE METHOD HERE TO GIVE POSITION.
+*/
 
-    printf("Initializing\n");
+
+int main(void) {
     nrf_serial_init(&serial_uart, &m_uart0_drv_config, &serial_config);
 
     while (1) {
-        nrf_delay_ms(1);
+        nrf_delay_ms(1000);
+        __disable_irq();
+        memcpy(sorted_theta, lidar_data.theta, sizeof(float) * MAX_RESOLUTION);
+        memcpy(sorted_distance, lidar_data.distance, sizeof(float) * MAX_RESOLUTION);
+        quickSort(sorted_theta, sorted_distance, 0, MAX_RESOLUTION - 1);
+        classify(sorted_distance, sorted_theta, 4, &position);
+        __enable_irq();
     }
 }
