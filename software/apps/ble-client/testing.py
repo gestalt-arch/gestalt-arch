@@ -15,7 +15,7 @@ timeout = 10.0
 
 # list of ids to connect to with BLE
 device_ids = [
-    "c0:98:e5:49:F0:C1"
+    "c0:98:e5:49:F0:C2"
 ]
 
 MAIN_SERVICE_UUID = "60267642-592e-11ec-bf63-0242ac130002"

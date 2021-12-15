@@ -193,12 +193,19 @@ void corapp_init()
 	simple_ble_add_characteristic(1, 1, 0, 0, sizeof(rx_value), (uint8_t*)&rx_value, &main_service, &rx_char);
 	simple_ble_add_characteristic(1, 1, 0, 0, sizeof(tx_value), (uint8_t*)&tx_value, &main_service, &tx_char);
 
+	nrf_delay_ms(50);
 	// Start Advertising
 	simple_ble_adv_only_name();
 
+
+	sprintf(buf, "advertising %x:%x", ble_config.device_id >> 8, ble_config.device_id & 0xFF);
+	display_write(buf, DISPLAY_LINE_0);
 	while(1) {
 		power_manage();
 	}
+
+	sprintf(buf, "power_manage %x:%x", ble_config.device_id >> 8, ble_config.device_id & 0xFF);
+	display_write(buf, DISPLAY_LINE_0);
 	// Init BLE
 	simple_ble_app = simple_ble_init(&ble_config);
 	ble_comm_state = 0; // start in broadcast mode
