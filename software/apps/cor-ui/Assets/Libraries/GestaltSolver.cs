@@ -6,7 +6,7 @@ using System.IO;
 
 public class GestaltSolver
 {
-    static int MAX_SOLUTION_LENGTH = 64;
+    // static int MAX_SOLUTION_LENGTH = 64;
     static StreamWriter sw;
 
     /* Distance node struct */
@@ -23,18 +23,33 @@ public class GestaltSolver
     }
 
     public struct PathStream{
-        float[] x_pos_stream;
-        float[] y_pos_stream;
-        int[] action_stream;     // all 0's. last one is 3
-        int[] exclusion_stream;  // nothing
-        int path_length;
-        int bot_id;
+        public int botId;
+        public int pathLength; // initial, 1st waypt, 2nd waypt, home: lengh = 4
+        public float[] xPosStream;
+        public float[] yPosStream;
+        public int[] actionStream;     // all 0's. last one is 3
+        public int[] exclusionStream;  // nothing
+
+        public PathStream(int botId, int pathLength, float[] xPosStream, 
+                            float[] yPosStream,int[] actionStream, int[] exclusionStream) {
+            this.botId           = botId;
+            this.pathLength      = pathLength;
+            this.xPosStream      = xPosStream;
+            this.yPosStream      = yPosStream;
+            this.actionStream    = actionStream;
+            this.exclusionStream = exclusionStream;
+        }      
     }
 
 
     public struct PathStreamSolution {
-        PathStream[] path_stream_vector;
-        int num_path_streams;
+        public PathStream[] pathStreamVector;
+        public int numPathStream; // NUMBOTS
+
+        public PathStreamSolution(PathStream[] pathStreamVector, int numPathStream) {
+            this.pathStreamVector = pathStreamVector;
+            this.numPathStream = numPathStream;
+        }
     }
 
     /*
@@ -48,12 +63,12 @@ public class GestaltSolver
     /*
     * Generate distance nodes
     */
-    public static List<DistNode> SolvePathstream(int NUMBOTS, Vector3[] cubePosIni, Vector3[] cubePosFin, Vector3[] kobukiPos)
+    public static PathStreamSolution SolvePathstream(int NUMBOTS, Vector3[] cubePosIni, Vector3[] cubePosFin, Vector3[] kobukiPos)
     {
         List<DistNode> distances = new List<DistNode>();
-        for (int i = 0; i < 3; i++) // kobuki
+        for (int i = 0; i < NUMBOTS; i++) // kobuki
         {
-            for (int j = 0; j < 3; j++) // cube
+            for (int j = 0; j < NUMBOTS; j++) // cube
             {
                 distances.Add(new DistNode(i, j, 
                 GetDistance(kobukiPos[i][0], kobukiPos[i][2],
@@ -66,7 +81,7 @@ public class GestaltSolver
         List<int> cubesAssigned = new List<int>();
         int botIdx = 0;
         while (botIdx < NUMBOTS) {
-            for (int i = 0; i < 9; i++) {
+            for (int i = 0; i < NUMBOTS * NUMBOTS; i++) {
                 if (distances[i].botId == botIdx && !cubesAssigned.Contains(distances[i].cubeId)) {
                     solution.Add(distances[i]);
                     cubesAssigned.Add(distances[i].cubeId);
@@ -77,28 +92,63 @@ public class GestaltSolver
                 }
             }
         }
-        //
-        return solution;
+        //  bot idx will go low to high
+        PathStream[] pathStreamVector = new PathStream[NUMBOTS];
+        int pathLength = 4;
+        for (int i = 0; i < NUMBOTS; i++) {
+            //int botId, int pathLength, float[] xPosStream, 
+            //float[] yPosStream,int[] actionStream, int[] exclusionStream
+            int curCb = solution[i].cubeId;
+            float[] xPosStream      = new float[] {kobukiPos[i][0], cubePosIni[curCb][0], cubePosFin[curCb][0], kobukiPos[i][0]};
+            float[] yPosStream      = new float[] {kobukiPos[i][2], cubePosIni[curCb][2], cubePosFin[curCb][2], kobukiPos[i][2]};
+            int[] actionStream      = new int[] {0, 0, 0, 3};
+            int[] exclusionStream   = new int[] {0, 0, 0, 0};
+            pathStreamVector[i] = new PathStream(i, pathLength, xPosStream, 
+                            yPosStream, actionStream, exclusionStream);
+        }
+
+        return new PathStreamSolution(pathStreamVector, NUMBOTS);        
     }
 
     /* Save solution into given filepath */
-    public static void SaveSolution(string fname, List<DistNode> solution) {
+    public static void SaveSolution(string fname, PathStreamSolution solution) {
         sw = new StreamWriter(fname, true);
-        Debug.Log("Saving solution");
-        foreach (DistNode d in solution) {
-            // write bot
-            sw.WriteLine("");
-        }
-        // sw.WriteLine("{0} {1}\n", cubePosIni[0][0], cubePosIni[0][2]);
-        // sw.WriteLine("{0} {1}\n", cubePosIni[1][0], cubePosIni[1][2]);
-        // sw.WriteLine("{0} {1}\n", cubePosIni[2][0], cubePosIni[2][2]);
-        // sw.WriteLine("{0} {1}\n", cubePosFin[0][0], cubePosFin[0][2]);
-        // sw.WriteLine("{0} {1}\n", cubePosFin[1][0], cubePosFin[1][2]);
-        // sw.WriteLine("{0} {1}\n", cubePosFin[2][0], cubePosFin[2][2]);
-        // sw.WriteLine("{0} {1}\n", kobukiPos[0][0], kobukiPos[0][2]);
-        // sw.WriteLine("{0} {1}\n", kobukiPos[1][0], kobukiPos[1][2]);
-        // sw.WriteLine("{0} {1}\n", kobukiPos[2][0], kobukiPos[2][2]);
 
+        Debug.Log("Saving solution into " + fname);
+        // number of pathstreams to read for
+        sw.WriteLine(solution.numPathStream);
+        foreach (PathStream p in solution.pathStreamVector) {
+            // for each pathstream, we save the following
+            // botid
+            // pathlength
+            // array of x
+            // array of y
+            // array of action
+            // array of exclusion
+            sw.WriteLine(p.botId);
+            sw.WriteLine(p.pathLength);
+
+            foreach (float f in p.xPosStream) {
+                sw.Write(f + " ");
+            }
+            sw.WriteLine();
+
+            foreach (float f in p.yPosStream) {
+                sw.Write(f + " ");
+            }
+            sw.WriteLine();
+
+            foreach (int i in p.actionStream) {
+                sw.Write(i + " ");
+            }
+            sw.WriteLine();
+
+            foreach (int i in p.exclusionStream) {
+                sw.Write(i + " ");
+            }
+            sw.WriteLine();
+        }
+        
         sw.Flush();
         sw.Close();
         Debug.Log("Saved");
