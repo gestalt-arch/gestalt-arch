@@ -1,5 +1,5 @@
 #include "lidar_classification.h"
-#include <inttypes.h>
+#include <stdint.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
