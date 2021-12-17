@@ -66,7 +66,7 @@ void print(float* distance, float* theta, uint8_t num_objects) {
 */
 
 float get_width(float theta1, float theta2, float distance1, float distance2) {
-	return sqrtf(distance1 * distance1 + distance2 * distance2 - 2 * distance1 * distance2 * cosf((theta2 - theta1) * DEG_TO_RAD));
+	return sqrtf(distance1 * distance1 + distance2 * distance2 - 2 * distance1 * distance2 * fabs(cosf((theta2 - theta1) * DEG_TO_RAD)));
 }
 
 void get_loc(struct coordinate* cord, float pole1_theta, float pole2_theta) {
